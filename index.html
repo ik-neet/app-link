@@ -3,53 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Apps</title>
+  <title>My Portfolio</title>
 
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', sans-serif;
       background: #0f172a;
       color: #e5e7eb;
+      line-height: 1.6;
     }
 
     header {
       text-align: center;
-      padding: 60px 20px 30px;
+      padding: 80px 20px 40px;
     }
 
     header h1 {
-      font-size: 32px;
+      font-size: 36px;
       margin: 0;
       font-weight: 600;
     }
 
     header p {
-      margin-top: 10px;
+      margin-top: 12px;
       color: #94a3b8;
-      font-size: 14px;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
       padding: 20px;
       transition: all 0.25s ease;
@@ -59,26 +55,32 @@
     }
 
     .card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-6px);
+      border-color: rgba(255,255,255,0.2);
     }
 
     .card h2 {
-      font-size: 18px;
-      margin: 0 0 16px;
-      font-weight: 600;
+      margin: 0 0 10px;
+      font-size: 20px;
     }
+
+    .card p {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+
+    
 
     .card a {
       text-decoration: none;
-      font-size: 14px;
-      color: #0f172a;
-      background: #38bdf8;
-      padding: 10px 14px;
-      border-radius: 8px;
       text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: #38bdf8;
+      color: #0f172a;
       font-weight: 600;
-      transition: all 0.2s ease;
+      transition: 0.2s;
     }
 
     .card a:hover {
@@ -87,7 +89,7 @@
 
     footer {
       text-align: center;
-      padding: 40px 20px;
+      padding: 50px 20px;
       font-size: 12px;
       color: #64748b;
     }
@@ -96,41 +98,51 @@
 <body>
 
 <header>
-  <h1>My Apps</h1>
-  <p>シンプルなアプリリンク集</p>
+  <h1>アプリ一覧</h1>
+  <p>制作したWebアプリ一覧</p>
 </header>
 
 <div class="container">
 
   <div class="card">
     <h2>Wikipediaカードバトル</h2>
-    <a href="https://wikipedia-card-battle.vercel.app/" target="_blank">Open</a>
+    <p>Wikipediaの情報を使った対戦型カードゲーム。知識と戦略で勝負。</p>
+    
+    <a href="https://wikipedia-card-battle.vercel.app/" target="_blank">View App</a>
   </div>
 
   <div class="card">
     <h2>トークテーマガチャ</h2>
-    <a href="https://talks-theme-gacha.web.app/" target="_blank">Open</a>
+    <p>会話に困らないためのランダムトークテーマ生成アプリ。</p>
+    
+    <a href="https://talks-theme-gacha.web.app/" target="_blank">View App</a>
   </div>
 
   <div class="card">
     <h2>ルーレット</h2>
-    <a href="https://roulette-2b82a.web.app/" target="_blank">Open</a>
+    <p>シンプルで使いやすいランダムルーレットアプリ。</p>
+    
+    <a href="https://roulette-2b82a.web.app/" target="_blank">View App</a>
   </div>
 
   <div class="card">
     <h2>クイズバトル</h2>
-    <a href="https://quiz-battle-9a6fa.web.app/" target="_blank">Open</a>
+    <p>リアルタイムで対戦できるクイズゲーム。</p>
+    
+    <a href="https://quiz-battle-9a6fa.web.app/" target="_blank">View App</a>
   </div>
 
   <div class="card">
     <h2>割り勘管理</h2>
-    <a href="https://warikan-874e6.web.app/" target="_blank">Open</a>
+    <p>グループでの支払いを簡単に管理できる割り勘アプリ。</p>
+    
+    <a href="https://warikan-874e6.web.app/" target="_blank">View App</a>
   </div>
 
 </div>
 
 <footer>
-  © 2026 My Apps
+  © 2026 ik_neet
 </footer>
 
 </body>
