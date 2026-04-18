@@ -1,79 +1,96 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>アプリリンク集</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Apps</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f5f7fb;
-      color: #333;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
     }
 
     header {
       text-align: center;
-      padding: 40px 20px 20px;
+      padding: 60px 20px 30px;
     }
 
     header h1 {
+      font-size: 32px;
       margin: 0;
-      font-size: 28px;
+      font-weight: 600;
     }
 
     header p {
-      color: #666;
-      margin-top: 8px;
+      margin-top: 10px;
+      color: #94a3b8;
+      font-size: 14px;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
     }
 
     .card {
-      background: #fff;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
       padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     .card h2 {
-      margin: 0 0 10px;
-      font-size: 20px;
+      font-size: 18px;
+      margin: 0 0 16px;
+      font-weight: 600;
     }
 
     .card a {
-      display: inline-block;
       text-decoration: none;
-      color: #fff;
-      background: #4f7cff;
-      padding: 10px 16px;
-      border-radius: 8px;
       font-size: 14px;
-      transition: background 0.2s;
+      color: #0f172a;
+      background: #38bdf8;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.2s ease;
     }
 
     .card a:hover {
-      background: #355edb;
+      background: #0ea5e9;
     }
 
     footer {
       text-align: center;
-      padding: 30px 20px;
+      padding: 40px 20px;
       font-size: 12px;
-      color: #888;
+      color: #64748b;
     }
-  </style>
 </head>
 <body>
 
@@ -123,7 +140,7 @@
 </div>
 
 <footer>
-  © 2026 My Apps
+  © 2026 ik_neet
 </footer>
 
 </body>
