@@ -9,14 +9,15 @@
     * { box-sizing: border-box; }
 
     :root {
-      --bg: #f7f7f5;
+      --bg: #f5fbff;
       --surface: #ffffff;
-      --text: #1f2933;
-      --muted: #64707d;
-      --line: #d8ddd8;
-      --line-strong: #b9c1ba;
-      --accent: #25634f;
-      --accent-hover: #1d4f3f;
+      --text: #1f2d3d;
+      --muted: #5f7387;
+      --line: #d5e9f5;
+      --line-strong: #9fcce4;
+      --accent: #1576a8;
+      --accent-hover: #0f5f88;
+      --accent-soft: #e5f5fc;
     }
 
     body {
@@ -70,6 +71,7 @@
 
     .card:hover {
       border-color: var(--line-strong);
+      background: #fbfdff;
     }
 
     .card h2 {
@@ -90,19 +92,22 @@
       text-decoration: none;
       padding: 7px 12px;
       border-radius: 4px;
-      background: var(--accent);
-      color: #ffffff;
+      background: var(--accent-soft);
+      border: 1px solid #b7dff0;
+      color: var(--accent);
       font-weight: 600;
       font-size: 13px;
       line-height: 1.4;
     }
 
     .card a:hover {
-      background: var(--accent-hover);
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
     }
 
     .card a:focus-visible {
-      outline: 3px solid rgba(37, 99, 79, 0.25);
+      outline: 3px solid rgba(21, 118, 168, 0.2);
       outline-offset: 2px;
     }
 
