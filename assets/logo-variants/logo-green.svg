@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="120" viewBox="0 0 560 120" role="img" aria-labelledby="title desc">
+  <title id="title">ik-neet.com green logo variant</title>
+  <desc id="desc">ik-neet.com logo with a green i motif.</desc>
+  <g fill="none" fill-rule="evenodd">
+    <path d="M31 35H19v50h12" stroke="#BFE7D8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M87 35h12v50H87" stroke="#BFE7D8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="59" cy="35" r="8" fill="#27A56F"/>
+    <rect x="51" y="51" width="16" height="36" rx="8" fill="#27A56F"/>
+    <text x="132" y="77"
+          fill="#1F2D3D"
+          font-family="'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif"
+          font-size="49"
+          font-weight="800"
+          letter-spacing="-1">ik-neet.com</text>
+  </g>
+</svg>
