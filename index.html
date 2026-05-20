@@ -36,10 +36,13 @@
     }
 
     header h1 {
-      font-size: clamp(28px, 5vw, 40px);
       margin: 0;
-      font-weight: 700;
-      letter-spacing: 0;
+    }
+
+    .site-logo {
+      display: block;
+      width: min(320px, 82vw);
+      height: auto;
     }
 
     header p {
@@ -133,7 +136,7 @@
 <body>
 
 <header>
-  <h1>ik-neet.com</h1>
+  <h1><img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" /></h1>
   <p>制作したWebアプリの一覧です。</p>
 </header>
 
