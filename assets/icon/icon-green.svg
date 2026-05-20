@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">ik-neet.com green i icon</title>
+  <desc id="desc">Green bracketed i motif icon for ik-neet.com.</desc>
+  <g fill="none" fill-rule="evenodd">
+    <path d="M31 35H19v50h12" stroke="#BFE7D8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M87 35h12v50H87" stroke="#BFE7D8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="59" cy="35" r="8" fill="#27A56F"/>
+    <rect x="51" y="51" width="16" height="36" rx="8" fill="#27A56F"/>
+  </g>
+</svg>
