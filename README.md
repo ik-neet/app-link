@@ -29,6 +29,14 @@ npx wrangler pages deploy . --project-name app-link
 
 アプリ一覧は `data/apps.json` で管理し、`index.html` とサムネイルをツールで更新します。
 
+GUI で操作する場合は次のコマンドを実行し、ブラウザで `http://127.0.0.1:8790/admin` を開きます。
+
+```powershell
+npm run admin
+```
+
+GUI では、アプリの追加・編集・削除、個別サムネイル生成、全サムネイル生成、`index.html` 生成、プレビュー確認ができます。
+
 ```powershell
 npm install
 npm run apps:list

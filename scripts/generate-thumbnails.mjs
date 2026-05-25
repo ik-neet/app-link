@@ -1,2 +1,3 @@
-process.argv.splice(2, 0, 'thumbnails');
-await import('./app-link-tool.mjs');
+import { runCli } from './app-link-tool.mjs';
+
+await runCli(['thumbnails', ...process.argv.slice(2)]);

@@ -20,47 +20,59 @@ const viewport = {
   height: 720,
 };
 
-const command = process.argv[2] || 'help';
-const flags = parseFlags(process.argv.slice(3));
+export { addApp, buildIndex, categories, generateThumbnails, listApps, readApps, removeApp, runCli, updateApp };
 
-switch (command) {
-  case 'list':
-    await listApps();
-    break;
-  case 'add':
-    await addApp(flags);
-    break;
-  case 'update':
-    await updateApp(flags);
-    break;
-  case 'remove':
-    await removeApp(flags);
-    break;
-  case 'build':
-    await buildIndex();
-    break;
-  case 'thumbnails':
-    await generateThumbnails(flags);
-    break;
-  case 'refresh':
-    await generateThumbnails(flags);
-    await buildIndex();
-    break;
-  case 'help':
-  default:
-    printHelp();
-    break;
+if (isCliEntry()) {
+  await runCli(process.argv.slice(2));
 }
 
-async function listApps() {
+async function runCli(args) {
+  const command = args[0] || 'help';
+  const flags = parseFlags(args.slice(1));
+
+  switch (command) {
+    case 'list':
+      await listApps({ print: true });
+      break;
+    case 'add':
+      await addApp(flags);
+      break;
+    case 'update':
+      await updateApp(flags);
+      break;
+    case 'remove':
+      await removeApp(flags);
+      break;
+    case 'build':
+      await buildIndex();
+      break;
+    case 'thumbnails':
+      await generateThumbnails(flags);
+      break;
+    case 'refresh':
+      await generateThumbnails(flags);
+      await buildIndex();
+      break;
+    case 'help':
+    default:
+      printHelp();
+      break;
+  }
+}
+
+async function listApps(options = {}) {
   const apps = await readApps();
 
-  for (const category of categories) {
-    console.log(`${category.label}`);
-    for (const app of apps.filter((item) => item.category === category.id)) {
-      console.log(`  ${app.slug} | ${app.title} | ${app.url}`);
+  if (options.print) {
+    for (const category of categories) {
+      console.log(`${category.label}`);
+      for (const app of apps.filter((item) => item.category === category.id)) {
+        console.log(`  ${app.slug} | ${app.title} | ${app.url}`);
+      }
     }
   }
+
+  return apps;
 }
 
 async function addApp(input) {
@@ -75,6 +87,7 @@ async function addApp(input) {
   await writeApps(apps);
   await buildIndex(apps);
   console.log(`Added ${app.slug}`);
+  return app;
 }
 
 async function updateApp(input) {
@@ -93,6 +106,7 @@ async function updateApp(input) {
   await writeApps(apps);
   await buildIndex(apps);
   console.log(`Updated ${input.slug}`);
+  return apps[index];
 }
 
 async function removeApp(input) {
@@ -110,12 +124,14 @@ async function removeApp(input) {
   await writeApps(nextApps);
   await buildIndex(nextApps);
   console.log(`Removed ${input.slug}`);
+  return input.slug;
 }
 
 async function buildIndex(existingApps) {
   const apps = existingApps || await readApps();
   await writeFile(indexPath, renderIndex(apps), 'utf8');
   console.log('Built index.html');
+  return indexPath;
 }
 
 async function generateThumbnails(input) {
@@ -158,6 +174,7 @@ async function generateThumbnails(input) {
 
   await browser.close();
   console.log(`Saved thumbnails to ${path.relative(projectRoot, outputDir)}`);
+  return targets.map((app) => path.join(outputDir, `${app.slug}.png`));
 }
 
 async function alignPage(page, focus) {
@@ -545,4 +562,9 @@ function printHelp() {
   npm run app -- update --slug slug [--category game|tool] [--title title] [--description text] [--url url] [--initial text] [--focus auto|top|center|selector]
   npm run app -- remove --slug slug
 `);
+}
+
+function isCliEntry() {
+  if (!process.argv[1]) return false;
+  return path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 }

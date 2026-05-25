@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "admin": "node scripts/admin-server.mjs",
     "app": "node scripts/app-link-tool.mjs",
     "apps:build": "node scripts/app-link-tool.mjs build",
     "apps:list": "node scripts/app-link-tool.mjs list",
