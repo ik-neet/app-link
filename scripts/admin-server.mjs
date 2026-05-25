@@ -1,7 +1,9 @@
 import { createReadStream } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import {
   addApp,
@@ -16,6 +18,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
 const port = Number(process.env.PORT || 8790);
+const execFileAsync = promisify(execFile);
 
 const server = createServer(async (request, response) => {
   try {
@@ -82,6 +85,17 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (request.method === 'GET' && url.pathname === '/api/git/status') {
+      sendJson(response, { ok: true, status: await getGitStatus() });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/git/commit-push') {
+      const body = await readJson(request);
+      sendJson(response, { ok: true, result: await commitAndPush(body.message) });
+      return;
+    }
+
     if (request.method === 'GET' && url.pathname === '/preview') {
       response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       createReadStream(path.join(projectRoot, 'index.html')).pipe(response);
@@ -108,6 +122,60 @@ async function readJson(request) {
   for await (const chunk of request) chunks.push(chunk);
   const text = Buffer.concat(chunks).toString('utf8');
   return text ? JSON.parse(text) : {};
+}
+
+async function getGitStatus() {
+  const branch = (await runGit(['rev-parse', '--abbrev-ref', 'HEAD'])).trim();
+  const shortStatus = (await runGit(['status', '--short', '--branch'])).trim();
+  const changedLines = shortStatus
+    .split('\n')
+    .filter((line) => line && !line.startsWith('##'));
+
+  return {
+    branch,
+    clean: changedLines.length === 0,
+    text: shortStatus || `## ${branch}`,
+  };
+}
+
+async function commitAndPush(message) {
+  const trimmedMessage = String(message || '').trim();
+
+  if (!trimmedMessage) {
+    throw new Error('コミットメッセージを入力してください。');
+  }
+
+  const beforeStatus = await getGitStatus();
+
+  if (beforeStatus.clean) {
+    throw new Error('コミットする変更がありません。');
+  }
+
+  await runGit(['add', '-A']);
+  const commitOutput = await runGit(['commit', '-m', trimmedMessage]);
+  const pushOutput = await runGit(['push', 'origin', beforeStatus.branch]);
+
+  return {
+    branch: beforeStatus.branch,
+    commit: commitOutput.trim(),
+    push: pushOutput.trim(),
+    status: await getGitStatus(),
+  };
+}
+
+async function runGit(args) {
+  try {
+    const { stdout, stderr } = await execFileAsync('git', args, {
+      cwd: projectRoot,
+      windowsHide: true,
+      maxBuffer: 1024 * 1024 * 4,
+    });
+
+    return [stdout, stderr].filter(Boolean).join('\n');
+  } catch (error) {
+    const output = [error.stdout, error.stderr, error.message].filter(Boolean).join('\n');
+    throw new Error(output);
+  }
 }
 
 function sendJson(response, payload, status = 200) {
@@ -403,6 +471,31 @@ function renderAdminPage() {
       font-weight: 700;
     }
 
+    .git-panel {
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .git-panel h2 {
+      margin-bottom: 10px;
+    }
+
+    .git-status {
+      min-height: 72px;
+      max-height: 180px;
+      overflow: auto;
+      margin: 8px 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 8px;
+      background: #f8fafc;
+      color: var(--muted);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
     iframe {
       width: 100%;
       height: 420px;
@@ -512,6 +605,18 @@ function renderAdminPage() {
         </div>
       </form>
       <p id="status" class="status"></p>
+
+      <div class="git-panel">
+        <h2 class="form-title">GitHub反映</h2>
+        <label>コミットメッセージ
+          <input id="commitMessage" value="更新：アプリリンクを更新" />
+        </label>
+        <div class="form-actions">
+          <button type="button" id="gitStatusButton">状態確認</button>
+          <button type="button" id="commitPushButton" class="primary">コミットしてpush</button>
+        </div>
+        <pre id="gitStatus" class="git-status">未確認</pre>
+      </div>
     </aside>
   </main>
 
@@ -531,6 +636,8 @@ function renderAdminPage() {
     document.querySelector('#refreshButton').addEventListener('click', () => runAction('/api/refresh', {}, '全更新しました。'));
     document.querySelector('#previewButton').addEventListener('click', refreshPreview);
     document.querySelector('#clearButton').addEventListener('click', clearForm);
+    document.querySelector('#gitStatusButton').addEventListener('click', loadGitStatus);
+    document.querySelector('#commitPushButton').addEventListener('click', commitAndPush);
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -550,6 +657,7 @@ function renderAdminPage() {
       categories = data.categories;
       renderLists();
       setStatus('読み込みました。');
+      loadGitStatus({ silent: true });
     }
 
     function renderLists() {
@@ -635,9 +743,34 @@ function renderAdminPage() {
       refreshPreview();
     }
 
+    async function loadGitStatus(options = {}) {
+      const data = await request('/api/git/status', { silent: options.silent });
+      document.querySelector('#gitStatus').textContent = data.status.text;
+      if (!options.silent) setStatus(data.status.clean ? 'Git状態: 変更なし' : 'Git状態: 未コミット変更あり');
+    }
+
+    async function commitAndPush() {
+      const message = document.querySelector('#commitMessage').value.trim();
+      if (!message) {
+        setStatus('コミットメッセージを入力してください。', true);
+        return;
+      }
+
+      if (!confirm('現在の変更をすべてコミットして GitHub に push します。実行しますか？')) {
+        return;
+      }
+
+      const data = await request('/api/git/commit-push', {
+        method: 'POST',
+        body: { message },
+      });
+      document.querySelector('#gitStatus').textContent = data.result.status.text;
+      setStatus('コミットしてpushしました。');
+    }
+
     async function request(endpoint, options = {}) {
       setBusy(true);
-      setStatus('処理中...');
+      if (!options.silent) setStatus('処理中...');
       try {
         const response = await fetch(endpoint, {
           method: options.method || 'GET',
