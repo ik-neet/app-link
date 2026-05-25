@@ -13,126 +13,176 @@
     * { box-sizing: border-box; }
 
     :root {
-      --bg: #f5fbff;
-      --surface: #ffffff;
+      --bg: #f7fafc;
       --text: #1f2d3d;
-      --muted: #5f7387;
-      --line: #d5e9f5;
-      --line-strong: #9fcce4;
-      --accent: #1576a8;
-      --accent-hover: #0f5f88;
-      --accent-soft: #e5f5fc;
+      --muted: #627386;
+      --line: #d9e4ec;
+      --accent: #146c94;
+      --surface-hover: #eef6fa;
+      --game: #1f8a70;
+      --tool: #8a5a1f;
     }
 
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
-      background: var(--bg);
       color: var(--text);
+      background: var(--bg);
       line-height: 1.65;
     }
 
-    header {
-      max-width: 960px;
+    header,
+    main,
+    footer {
+      width: min(960px, calc(100% - 40px));
       margin: 0 auto;
-      padding: 56px 20px 24px;
+    }
+
+    header {
+      padding: 48px 0 22px;
       border-bottom: 1px solid var(--line);
     }
 
-    header h1 {
-      margin: 0;
-    }
+    h1 { margin: 0; }
 
     .site-logo {
       display: block;
-      width: min(320px, 82vw);
+      width: min(300px, 82vw);
       height: auto;
     }
 
-    header p {
+    .lead {
       max-width: 560px;
       margin: 10px 0 0;
       color: var(--muted);
       font-size: 15px;
     }
 
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 28px 20px 12px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 12px;
-    }
+    main { padding: 22px 0 8px; }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 18px;
+    .app-section { padding: 26px 0 12px; }
+
+    .section-heading {
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 168px;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid var(--line);
     }
 
-    .card:hover {
-      border-color: var(--line-strong);
-      background: #fbfdff;
-    }
-
-    .card h2 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      line-height: 1.35;
+    .section-heading h2 {
+      margin: 0;
+      padding-bottom: 8px;
+      font-size: 22px;
+      line-height: 1.3;
       letter-spacing: 0;
     }
 
-    .card p {
-      font-size: 14px;
+    .section-heading .count {
       color: var(--muted);
-      margin: 0 0 18px;
-    }
-
-    .card a {
-      align-self: flex-start;
-      text-decoration: none;
-      padding: 7px 12px;
-      border-radius: 4px;
-      background: var(--accent-soft);
-      border: 1px solid #b7dff0;
-      color: var(--accent);
-      font-weight: 600;
       font-size: 13px;
-      line-height: 1.4;
     }
 
-    .card a:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
+    .section-heading.game h2 { border-bottom: 2px solid var(--game); }
+    .section-heading.tool h2 { border-bottom: 2px solid var(--tool); }
+
+    .app-items {
+      list-style: none;
+      margin: 0;
+      padding: 0;
     }
 
-    .card a:focus-visible {
-      outline: 3px solid rgba(21, 118, 168, 0.2);
+    .app-item { border-bottom: 1px solid var(--line); }
+
+    .app-link {
+      display: grid;
+      grid-template-columns: 96px 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 4px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .app-link:hover { background: var(--surface-hover); }
+
+    .app-link:focus-visible {
+      outline: 3px solid rgba(20, 108, 148, 0.22);
       outline-offset: 2px;
     }
 
-    footer {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 28px 20px 44px;
-      font-size: 12px;
+    .app-thumb {
+      width: 96px;
+      aspect-ratio: 16 / 9;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--accent);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .app-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .app-text { min-width: 0; }
+
+    .app-title {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 17px;
+      line-height: 1.4;
+    }
+
+    .app-description {
+      display: block;
       color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .app-action {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    footer {
+      padding: 28px 0 44px;
+      color: var(--muted);
+      font-size: 12px;
     }
 
     @media (max-width: 640px) {
-      header {
-        padding-top: 36px;
+      header,
+      main,
+      footer {
+        width: min(100% - 28px, 960px);
       }
 
-      .container {
-        grid-template-columns: 1fr;
+      header { padding-top: 34px; }
+
+      .app-link {
+        grid-template-columns: 72px 1fr;
+        gap: 12px;
+        padding: 13px 0;
+      }
+
+      .app-thumb { width: 72px; }
+
+      .app-action {
+        grid-column: 2;
+        justify-self: start;
+        margin-top: -6px;
       }
     }
   </style>
@@ -141,61 +191,105 @@
 
 <header>
   <h1><img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" /></h1>
-  <p>制作したWebアプリの一覧です。</p>
+  <p class="lead">制作したWebアプリの一覧です。</p>
 </header>
 
-<div class="container">
+<main>
+  <section class="app-section" aria-labelledby="games-heading">
+    <div class="section-heading game">
+      <h2 id="games-heading">ゲーム</h2>
+      <span class="count">4件</span>
+    </div>
 
-  <div class="card">
-    <h2>日本市区町村位置当てゲーム</h2>
-    <p>市町村名を見て、それが日本のどこにあるのか当てるクイズ</p>
-    <a href="https://pin-quiz.ik-neet.com/" target="_blank">開く</a>
-  </div>
+    <ul class="app-items">
+      <li class="app-item">
+        <a class="app-link" href="https://pin-quiz.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/pin-quiz.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">日本市区町村位置当てゲーム</strong>
+            <span class="app-description">市町村名を見て、それが日本のどこにあるのか当てるクイズ</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
 
-  
-  <div class="card">
-    <h2>全員一致ゲーム</h2>
-    <p>参加者全員の価値観を合わせる例のゲームを作ってみた。</p>
-    
-    <a href="https://zennin-icchi.ik-neet.com/" target="_blank">開く</a>
-  </div>
+      <li class="app-item">
+        <a class="app-link" href="https://zennin-icchi.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/zennin-icchi.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">全員一致ゲーム</strong>
+            <span class="app-description">参加者全員の価値観を合わせる例のゲーム</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
 
-  <div class="card">
-    <h2>Wikipediaカードバトル</h2>
-    <p>Wikipediaの情報を使った対戦型カードゲーム。知識と戦略で勝負。</p>
-    
-    <a href="https://wikipedia-card-battle.ik-neet.com/" target="_blank">開く</a>
-  </div>
+      <li class="app-item">
+        <a class="app-link" href="https://wikipedia-card-battle.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/wikipedia-card-battle.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">Wikipediaカードバトル</strong>
+            <span class="app-description">Wikipediaの情報を使った対戦型カードゲーム。知識と戦略で勝負。</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
 
-  <div class="card">
-    <h2>トークテーマガチャ</h2>
-    <p>会話に困らないためのランダムトークテーマ生成アプリ。</p>
-    
-    <a href="https://talk-theme.ik-neet.com/ " target="_blank">開く</a>
-  </div>
+      <li class="app-item">
+        <a class="app-link" href="https://quiz-battle-9a6fa.web.app/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/quiz-battle.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">クイズバトル</strong>
+            <span class="app-description">リアルタイムで対戦できるクイズゲーム。</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
+    </ul>
+  </section>
 
-  <div class="card">
-    <h2>ルーレット</h2>
-    <p>シンプルで使いやすいランダムルーレットアプリ。</p>
-    
-    <a href="https://roulette.ik-neet.com/" target="_blank">開く</a>
-  </div>
+  <section class="app-section" aria-labelledby="tools-heading">
+    <div class="section-heading tool">
+      <h2 id="tools-heading">ツール</h2>
+      <span class="count">3件</span>
+    </div>
 
-  <div class="card">
-    <h2>クイズバトル</h2>
-    <p>リアルタイムで対戦できるクイズゲーム。</p>
-    
-    <a href="https://quiz-battle-9a6fa.web.app/" target="_blank">開く</a>
-  </div>
+    <ul class="app-items">
+      <li class="app-item">
+        <a class="app-link" href="https://talk-theme.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/talk-theme.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">トークテーマガチャ</strong>
+            <span class="app-description">会話に困らないためのランダムトークテーマ生成アプリ。</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
 
-  <div class="card">
-    <h2>割り勘管理</h2>
-    <p>グループでの支払いを簡単に管理できる割り勘アプリ。</p>
-    
-    <a href="https://warikan.ik-neet.com/" target="_blank">開く</a>
-  </div>
+      <li class="app-item">
+        <a class="app-link" href="https://roulette.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/roulette.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">ルーレット</strong>
+            <span class="app-description">シンプルで使いやすいランダムルーレットアプリ。</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
 
-</div>
+      <li class="app-item">
+        <a class="app-link" href="https://warikan.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/warikan.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">割り勘管理</strong>
+            <span class="app-description">グループでの支払いを簡単に管理できる割り勘アプリ。</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+</main>
 
 <footer>
   © 2026 ik_neet

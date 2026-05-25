@@ -3,7 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "thumbnails": "node scripts/generate-thumbnails.mjs"
+    "app": "node scripts/app-link-tool.mjs",
+    "apps:build": "node scripts/app-link-tool.mjs build",
+    "apps:list": "node scripts/app-link-tool.mjs list",
+    "refresh": "node scripts/app-link-tool.mjs refresh",
+    "thumbnails": "node scripts/app-link-tool.mjs thumbnails"
   },
   "devDependencies": {
     "playwright": "^1.60.0"

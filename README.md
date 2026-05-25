@@ -27,15 +27,36 @@ npx wrangler pages deploy . --project-name app-link
 
 ## サムネイル生成
 
-リンク先を開いて `assets/thumbs/` にスクリーンショットを保存します。
+アプリ一覧は `data/apps.json` で管理し、`index.html` とサムネイルをツールで更新します。
 
 ```powershell
 npm install
+npm run apps:list
+npm run apps:build
 npm run thumbnails
 ```
 
-撮影対象と寄せ方は `scripts/generate-thumbnails.mjs` の `apps` で管理します。
+新規追加は次の形式です。
+
+```powershell
+npm run app -- add --slug sample-app --category tool --title "サンプルアプリ" --description "説明文" --url "https://example.com/" --initial "S" --focus auto
+npm run app -- thumbnails --slug sample-app
+```
+
+既存アプリの修正は次の形式です。
+
+```powershell
+npm run app -- update --slug sample-app --title "新しいタイトル" --focus center
+```
+
+削除は次の形式です。
+
+```powershell
+npm run app -- remove --slug sample-app
+```
+
 `focus` は `auto`、`top`、`center`、または CSS selector を指定できます。
+サムネイル撮影と `index.html` 生成をまとめて行う場合は `npm run refresh` を使います。
 
 ## メモ
 
