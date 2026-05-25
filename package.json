@@ -1,0 +1,11 @@
+{
+  "name": "app-link",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "thumbnails": "node scripts/generate-thumbnails.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

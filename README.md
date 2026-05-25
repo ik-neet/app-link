@@ -25,6 +25,18 @@
 npx wrangler pages deploy . --project-name app-link
 ```
 
+## サムネイル生成
+
+リンク先を開いて `assets/thumbs/` にスクリーンショットを保存します。
+
+```powershell
+npm install
+npm run thumbnails
+```
+
+撮影対象と寄せ方は `scripts/generate-thumbnails.mjs` の `apps` で管理します。
+`focus` は `auto`、`top`、`center`、または CSS selector を指定できます。
+
 ## メモ
 
 - `wrangler.toml` は Cloudflare Pages 用のプロジェクト名と公開ディレクトリだけを定義しています。
