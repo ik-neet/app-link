@@ -19,8 +19,8 @@
       --line: #d9e4ec;
       --accent: #146c94;
       --surface-hover: #eef6fa;
-      --game: #1f8a70;
-      --tool: #8a5a1f;
+      --cat-game: #1f8a70;
+      --cat-tool: #8a5a1f;
     }
 
     body {
@@ -83,8 +83,8 @@
       font-size: 13px;
     }
 
-    .section-heading.game h2 { border-bottom: 2px solid var(--game); }
-    .section-heading.tool h2 { border-bottom: 2px solid var(--tool); }
+    .section-heading.game h2 { border-bottom: 2px solid var(--cat-game); }
+    .section-heading.tool h2 { border-bottom: 2px solid var(--cat-tool); }
 
     .app-items {
       list-style: none;
@@ -96,7 +96,7 @@
 
     .app-link {
       display: grid;
-      grid-template-columns: 96px 1fr auto;
+      grid-template-columns: 120px 1fr auto;
       align-items: center;
       gap: 16px;
       padding: 14px 4px;
@@ -112,7 +112,7 @@
     }
 
     .app-thumb {
-      width: 96px;
+      width: 120px;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
@@ -172,12 +172,12 @@
       header { padding-top: 34px; }
 
       .app-link {
-        grid-template-columns: 72px 1fr;
+        grid-template-columns: 88px 1fr;
         gap: 12px;
         padding: 13px 0;
       }
 
-      .app-thumb { width: 72px; }
+      .app-thumb { width: 88px; }
 
       .app-action {
         grid-column: 2;

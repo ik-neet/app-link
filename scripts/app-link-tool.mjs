@@ -7,20 +7,36 @@ import { chromium } from 'playwright';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
 const dataPath = path.join(projectRoot, 'data', 'apps.json');
+const categoriesPath = path.join(projectRoot, 'data', 'categories.json');
 const indexPath = path.join(projectRoot, 'index.html');
 const outputDir = path.join(projectRoot, 'assets', 'thumbs');
 
-const categories = [
-  { id: 'game', label: 'ゲーム', className: 'game' },
-  { id: 'tool', label: 'ツール', className: 'tool' },
+const defaultCategories = [
+  { id: 'game', label: 'ゲーム', className: 'game', color: '#1f8a70' },
+  { id: 'tool', label: 'ツール', className: 'tool', color: '#8a5a1f' },
 ];
+
+const categoryColorPalette = ['#3b6fa0', '#9c5fb0', '#b07b3b', '#3b9c87', '#a04a4a'];
 
 const viewport = {
   width: 1280,
   height: 720,
 };
 
-export { addApp, buildIndex, categories, generateThumbnails, listApps, readApps, removeApp, runCli, updateApp };
+export {
+  addApp,
+  addCategory,
+  buildIndex,
+  generateThumbnails,
+  listApps,
+  readApps,
+  readCategories,
+  removeApp,
+  reorderApp,
+  runCli,
+  updateApp,
+  writeCategories,
+};
 
 if (isCliEntry()) {
   await runCli(process.argv.slice(2));
@@ -64,6 +80,7 @@ async function listApps(options = {}) {
   const apps = await readApps();
 
   if (options.print) {
+    const categories = await readCategories();
     for (const category of categories) {
       console.log(`${category.label}`);
       for (const app of apps.filter((item) => item.category === category.id)) {
@@ -78,6 +95,7 @@ async function listApps(options = {}) {
 async function addApp(input) {
   const apps = await readApps();
   const app = normalizeApp(input);
+  await assertCategoryExists(app.category);
 
   if (apps.some((item) => item.slug === app.slug)) {
     throw new Error(`slug "${app.slug}" は既に存在します。更新する場合は update を使ってください。`);
@@ -102,11 +120,60 @@ async function updateApp(input) {
     throw new Error(`slug "${input.slug}" が見つかりません。`);
   }
 
-  apps[index] = normalizeApp({ ...apps[index], ...input });
+  const nextApp = normalizeApp({ ...apps[index], ...input });
+  await assertCategoryExists(nextApp.category);
+
+  apps[index] = nextApp;
   await writeApps(apps);
   await buildIndex(apps);
   console.log(`Updated ${input.slug}`);
   return apps[index];
+}
+
+async function assertCategoryExists(categoryId) {
+  const categories = await readCategories();
+  if (!categories.some((category) => category.id === categoryId)) {
+    throw new Error(`category "${categoryId}" は存在しません。先にカテゴリを追加してください。`);
+  }
+}
+
+async function reorderApp({ slug, direction }) {
+  if (!slug) {
+    throw new Error('order には slug が必要です。');
+  }
+
+  if (direction !== 'up' && direction !== 'down') {
+    throw new Error('direction は up または down を指定してください。');
+  }
+
+  const apps = await readApps();
+  const target = apps.find((app) => app.slug === slug);
+
+  if (!target) {
+    throw new Error(`slug "${slug}" が見つかりません。`);
+  }
+
+  const siblingIndexes = apps
+    .map((app, index) => ({ app, index }))
+    .filter(({ app }) => app.category === target.category)
+    .map(({ index }) => index);
+
+  const targetIndex = apps.indexOf(target);
+  const positionInSiblings = siblingIndexes.indexOf(targetIndex);
+  const swapWith = direction === 'up'
+    ? siblingIndexes[positionInSiblings - 1]
+    : siblingIndexes[positionInSiblings + 1];
+
+  if (swapWith === undefined) {
+    return apps;
+  }
+
+  const nextApps = [...apps];
+  [nextApps[targetIndex], nextApps[swapWith]] = [nextApps[swapWith], nextApps[targetIndex]];
+
+  await writeApps(nextApps);
+  await buildIndex(nextApps);
+  return nextApps;
 }
 
 async function removeApp(input) {
@@ -129,7 +196,8 @@ async function removeApp(input) {
 
 async function buildIndex(existingApps) {
   const apps = existingApps || await readApps();
-  await writeFile(indexPath, renderIndex(apps), 'utf8');
+  const cats = await readCategories();
+  await writeFile(indexPath, renderIndex(apps, cats), 'utf8');
   console.log('Built index.html');
   return indexPath;
 }
@@ -238,8 +306,54 @@ async function readApps() {
 }
 
 async function writeApps(apps) {
-  const sortedApps = categories.flatMap((category) => apps.filter((app) => app.category === category.id));
+  const categories = await readCategories();
+  const knownIds = new Set(categories.map((category) => category.id));
+  const grouped = categories.flatMap((category) => apps.filter((app) => app.category === category.id));
+  const unknown = apps.filter((app) => !knownIds.has(app.category));
+  const sortedApps = [...grouped, ...unknown];
   await writeFile(dataPath, `${JSON.stringify(sortedApps, null, 2)}\n`, 'utf8');
+}
+
+async function readCategories() {
+  if (!existsSync(categoriesPath)) {
+    return defaultCategories;
+  }
+
+  const categories = JSON.parse(await readFile(categoriesPath, 'utf8'));
+  return categories;
+}
+
+async function writeCategories(categories) {
+  await mkdir(path.dirname(categoriesPath), { recursive: true });
+  await writeFile(categoriesPath, `${JSON.stringify(categories, null, 2)}\n`, 'utf8');
+}
+
+async function addCategory(input) {
+  const id = String(input.id || '').trim();
+  const label = String(input.label || '').trim();
+
+  if (!/^[a-z0-9-]+$/.test(id)) {
+    throw new Error('カテゴリidは英小文字、数字、ハイフンだけで指定してください。');
+  }
+
+  if (!label) {
+    throw new Error('カテゴリのlabelは必須です。');
+  }
+
+  const categories = await readCategories();
+
+  if (categories.some((category) => category.id === id)) {
+    throw new Error(`カテゴリ "${id}" は既に存在します。`);
+  }
+
+  const fallbackColor = categoryColorPalette[categories.length % categoryColorPalette.length];
+  const requestedColor = String(input.color || '').trim();
+  const color = /^#[0-9a-fA-F]{6}$/.test(requestedColor) ? requestedColor : fallbackColor;
+
+  const category = { id, label, className: id, color };
+  const nextCategories = [...categories, category];
+  await writeCategories(nextCategories);
+  return category;
 }
 
 function normalizeApp(input) {
@@ -264,8 +378,8 @@ function normalizeApp(input) {
     throw new Error('slug は英小文字、数字、ハイフンだけで指定してください。');
   }
 
-  if (!categories.some((category) => category.id === app.category)) {
-    throw new Error('category は game または tool を指定してください。');
+  if (!/^[a-z0-9-]+$/.test(app.category)) {
+    throw new Error('category は英小文字、数字、ハイフンだけで指定してください。');
   }
 
   return app;
@@ -293,10 +407,18 @@ function parseFlags(args) {
   return values;
 }
 
-function renderIndex(apps) {
-  const sections = categories
+function renderIndex(apps, cats) {
+  const sections = cats
     .map((category) => renderSection(category, apps.filter((app) => app.category === category.id)))
     .join('\n\n');
+
+  const categoryColorVars = cats
+    .map((category) => `      --cat-${escapeHtml(category.className)}: ${escapeHtml(category.color || '#146c94')};`)
+    .join('\n');
+
+  const categoryHeadingRules = cats
+    .map((category) => `    .section-heading.${escapeHtml(category.className)} h2 { border-bottom: 2px solid var(--cat-${escapeHtml(category.className)}); }`)
+    .join('\n');
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -319,8 +441,7 @@ function renderIndex(apps) {
       --line: #d9e4ec;
       --accent: #146c94;
       --surface-hover: #eef6fa;
-      --game: #1f8a70;
-      --tool: #8a5a1f;
+${categoryColorVars}
     }
 
     body {
@@ -383,8 +504,7 @@ function renderIndex(apps) {
       font-size: 13px;
     }
 
-    .section-heading.game h2 { border-bottom: 2px solid var(--game); }
-    .section-heading.tool h2 { border-bottom: 2px solid var(--tool); }
+${categoryHeadingRules}
 
     .app-items {
       list-style: none;
@@ -396,7 +516,7 @@ function renderIndex(apps) {
 
     .app-link {
       display: grid;
-      grid-template-columns: 96px 1fr auto;
+      grid-template-columns: 120px 1fr auto;
       align-items: center;
       gap: 16px;
       padding: 14px 4px;
@@ -412,7 +532,7 @@ function renderIndex(apps) {
     }
 
     .app-thumb {
-      width: 96px;
+      width: 120px;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
@@ -472,12 +592,12 @@ function renderIndex(apps) {
       header { padding-top: 34px; }
 
       .app-link {
-        grid-template-columns: 72px 1fr;
+        grid-template-columns: 88px 1fr;
         gap: 12px;
         padding: 13px 0;
       }
 
-      .app-thumb { width: 72px; }
+      .app-thumb { width: 88px; }
 
       .app-action {
         grid-column: 2;
@@ -558,8 +678,8 @@ function printHelp() {
   npm run app -- build
   npm run app -- thumbnails [--slug slug]
   npm run app -- refresh [--slug slug]
-  npm run app -- add --slug slug --category game|tool --title title --description text --url url --initial text [--focus auto|top|center|selector]
-  npm run app -- update --slug slug [--category game|tool] [--title title] [--description text] [--url url] [--initial text] [--focus auto|top|center|selector]
+  npm run app -- add --slug slug --category categoryId --title title --description text --url url --initial text [--focus auto|top|center|selector]
+  npm run app -- update --slug slug [--category categoryId] [--title title] [--description text] [--url url] [--initial text] [--focus auto|top|center|selector]
   npm run app -- remove --slug slug
 `);
 }

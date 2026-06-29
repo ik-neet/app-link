@@ -7,11 +7,13 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import {
   addApp,
+  addCategory,
   buildIndex,
-  categories,
   generateThumbnails,
   readApps,
+  readCategories,
   removeApp,
+  reorderApp,
   updateApp,
 } from './app-link-tool.mjs';
 
@@ -40,7 +42,7 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && url.pathname === '/api/apps') {
       sendJson(response, {
         apps: await readApps(),
-        categories,
+        categories: await readCategories(),
       });
       return;
     }
@@ -49,6 +51,13 @@ const server = createServer(async (request, response) => {
       const body = await readJson(request);
       await addApp(body);
       sendJson(response, { ok: true, apps: await readApps() });
+      return;
+    }
+
+    if (request.method === 'PUT' && url.pathname === '/api/apps/order') {
+      const body = await readJson(request);
+      const apps = await reorderApp({ slug: body.slug, direction: body.direction });
+      sendJson(response, { ok: true, apps });
       return;
     }
 
@@ -64,6 +73,19 @@ const server = createServer(async (request, response) => {
       const slug = decodeURIComponent(url.pathname.split('/').pop());
       await removeApp({ slug });
       sendJson(response, { ok: true, apps: await readApps() });
+      return;
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/categories') {
+      sendJson(response, { ok: true, categories: await readCategories() });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/categories') {
+      const body = await readJson(request);
+      await addCategory(body);
+      await buildIndex();
+      sendJson(response, { ok: true, categories: await readCategories() });
       return;
     }
 
@@ -506,7 +528,7 @@ function renderAdminPage() {
 
     .app-row {
       display: grid;
-      grid-template-columns: 96px 1fr auto;
+      grid-template-columns: 120px 1fr auto;
       align-items: center;
       gap: 14px;
       padding: 12px 4px;
@@ -514,7 +536,7 @@ function renderAdminPage() {
     }
 
     .thumb {
-      width: 96px;
+      width: 120px;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
@@ -683,7 +705,7 @@ function renderAdminPage() {
     }
 
     .thumb-preview {
-      width: 140px;
+      width: 160px;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
@@ -728,11 +750,11 @@ function renderAdminPage() {
       }
 
       .app-row {
-        grid-template-columns: 72px 1fr;
+        grid-template-columns: 88px 1fr;
       }
 
       .thumb {
-        width: 72px;
+        width: 88px;
       }
 
       .row-actions {
@@ -753,9 +775,9 @@ function renderAdminPage() {
       <h1>App Link Admin</h1>
       <div class="actions">
         <button id="reloadButton">再読み込み</button>
-        <button id="buildButton">index生成</button>
         <button id="thumbsButton">全サムネイル生成</button>
         <button id="refreshButton" class="primary">全更新</button>
+        <button id="addCategoryButton">カテゴリ追加</button>
         <button id="addButton" class="primary">新規追加</button>
         <button id="githubButton">GitHub反映</button>
       </div>
@@ -783,6 +805,7 @@ function renderAdminPage() {
       <h2 class="modal-title" id="appDialogTitle">新規追加</h2>
 
       <div id="thumbSection" hidden>
+        <p id="thumbNewHint" class="status" hidden>撮影/画像選択を行うと先にアプリが保存されます。</p>
         <div class="thumb-preview-row">
           <div class="thumb-preview" id="thumbPreview">-</div>
           <div class="thumb-tools">
@@ -799,10 +822,7 @@ function renderAdminPage() {
           <input name="slug" required pattern="[a-z0-9-]+" placeholder="sample-app" />
         </label>
         <label>カテゴリ
-          <select name="category" required>
-            <option value="game">ゲーム</option>
-            <option value="tool">ツール</option>
-          </select>
+          <select name="category" id="categorySelect" required></select>
         </label>
         <label>タイトル
           <input name="title" required />
@@ -825,6 +845,32 @@ function renderAdminPage() {
         </div>
       </form>
       <p id="appDialogStatus" class="status"></p>
+    </div>
+  </dialog>
+
+  <dialog id="categoryDialog">
+    <div class="modal-inner">
+      <div class="modal-close-row">
+        <button type="button" id="categoryDialogCloseTop" aria-label="閉じる">×</button>
+      </div>
+      <h2 class="modal-title">カテゴリ追加</h2>
+
+      <form id="categoryForm">
+        <label>id
+          <input name="id" required pattern="[a-z0-9-]+" placeholder="example" />
+        </label>
+        <label>label
+          <input name="label" required placeholder="表示名" />
+        </label>
+        <label>color（任意）
+          <input name="color" type="color" value="#146c94" />
+        </label>
+        <div class="form-actions">
+          <button type="button" id="categoryDialogCancel">キャンセル</button>
+          <button type="submit" class="primary">追加</button>
+        </div>
+      </form>
+      <p id="categoryDialogStatus" class="status"></p>
     </div>
   </dialog>
 
@@ -855,9 +901,15 @@ function renderAdminPage() {
     const appDialogTitle = document.querySelector('#appDialogTitle');
     const appDialogStatus = document.querySelector('#appDialogStatus');
     const appForm = document.querySelector('#appForm');
+    const categorySelect = document.querySelector('#categorySelect');
     const thumbSection = document.querySelector('#thumbSection');
+    const thumbNewHint = document.querySelector('#thumbNewHint');
     const thumbPreview = document.querySelector('#thumbPreview');
     const thumbFileInput = document.querySelector('#thumbFileInput');
+
+    const categoryDialog = document.querySelector('#categoryDialog');
+    const categoryDialogStatus = document.querySelector('#categoryDialogStatus');
+    const categoryForm = document.querySelector('#categoryForm');
 
     const githubDialog = document.querySelector('#githubDialog');
     const githubDialogStatus = document.querySelector('#githubDialogStatus');
@@ -868,7 +920,6 @@ function renderAdminPage() {
     let editingSlug = null;
 
     document.querySelector('#reloadButton').addEventListener('click', loadApps);
-    document.querySelector('#buildButton').addEventListener('click', () => runAction('/api/build', {}, 'index.html を生成しました。'));
     document.querySelector('#thumbsButton').addEventListener('click', () => runAction('/api/thumbnails', {}, '全サムネイルを生成しました。'));
     document.querySelector('#refreshButton').addEventListener('click', () => runAction('/api/refresh', {}, '全更新しました。'));
     document.querySelector('#previewButton').addEventListener('click', refreshPreview);
@@ -878,6 +929,13 @@ function renderAdminPage() {
     document.querySelector('#appDialogCloseTop').addEventListener('click', () => appDialog.close());
     appDialog.addEventListener('click', (event) => {
       if (event.target === appDialog) appDialog.close();
+    });
+
+    document.querySelector('#addCategoryButton').addEventListener('click', openCategoryDialog);
+    document.querySelector('#categoryDialogCancel').addEventListener('click', () => categoryDialog.close());
+    document.querySelector('#categoryDialogCloseTop').addEventListener('click', () => categoryDialog.close());
+    categoryDialog.addEventListener('click', (event) => {
+      if (event.target === categoryDialog) categoryDialog.close();
     });
 
     document.querySelector('#githubButton').addEventListener('click', openGithubDialog);
@@ -890,6 +948,16 @@ function renderAdminPage() {
 
     document.querySelector('#captureButton').addEventListener('click', captureThumbnail);
     thumbFileInput.addEventListener('change', handleThumbFileChange);
+
+    categoryForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(categoryForm).entries());
+      await request('/api/categories', { method: 'POST', body: payload }, { statusEl: categoryDialogStatus });
+      setStatus('カテゴリを追加しました。');
+      categoryDialog.close();
+      await loadApps();
+      refreshPreview();
+    });
 
     appForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -907,8 +975,19 @@ function renderAdminPage() {
       const data = await request('/api/apps');
       apps = data.apps;
       categories = data.categories;
+      renderCategoryOptions();
       renderLists();
       setStatus('読み込みました。');
+    }
+
+    function renderCategoryOptions() {
+      const previousValue = categorySelect.value;
+      categorySelect.innerHTML = categories
+        .map((category) => \`<option value="\${escapeHtml(category.id)}">\${escapeHtml(category.label)}</option>\`)
+        .join('');
+      if (previousValue && categories.some((category) => category.id === previousValue)) {
+        categorySelect.value = previousValue;
+      }
     }
 
     function renderLists() {
@@ -921,7 +1000,7 @@ function renderAdminPage() {
               <span class="count">\${categoryApps.length}件</span>
             </div>
             <div class="app-list">
-              \${categoryApps.map(renderRow).join('')}
+              \${categoryApps.map((app, index) => renderRow(app, index === 0, index === categoryApps.length - 1)).join('')}
             </div>
           </section>
         \`;
@@ -945,9 +1024,24 @@ function renderAdminPage() {
           refreshPreview();
         });
       });
+
+      lists.querySelectorAll('[data-move-up]').forEach((button) => {
+        button.addEventListener('click', () => moveApp(button.dataset.moveUp, 'up'));
+      });
+
+      lists.querySelectorAll('[data-move-down]').forEach((button) => {
+        button.addEventListener('click', () => moveApp(button.dataset.moveDown, 'down'));
+      });
     }
 
-    function renderRow(app) {
+    async function moveApp(slug, direction) {
+      await request('/api/apps/order', { method: 'PUT', body: { slug, direction } });
+      setStatus('並び順を変更しました。');
+      await loadApps();
+      refreshPreview();
+    }
+
+    function renderRow(app, isFirst, isLast) {
       const thumbSrc = '/assets/thumbs/' + encodeURIComponent(app.slug) + '.png?ts=' + Date.now();
       return \`
         <div class="app-row">
@@ -958,6 +1052,8 @@ function renderAdminPage() {
             <div class="url">\${escapeHtml(app.url)}</div>
           </div>
           <div class="row-actions">
+            <button data-move-up="\${escapeHtml(app.slug)}" \${isFirst ? 'disabled' : ''} aria-label="上へ">▲</button>
+            <button data-move-down="\${escapeHtml(app.slug)}" \${isLast ? 'disabled' : ''} aria-label="下へ">▼</button>
             <button data-edit="\${escapeHtml(app.slug)}">編集</button>
             <button data-thumbnail="\${escapeHtml(app.slug)}">撮影</button>
             <button class="danger" data-remove="\${escapeHtml(app.slug)}">削除</button>
@@ -972,8 +1068,11 @@ function renderAdminPage() {
       appForm.elements.focus.value = 'auto';
       appForm.elements.slug.disabled = false;
       appDialogTitle.textContent = '新規追加';
-      thumbSection.hidden = true;
+      thumbSection.hidden = false;
+      thumbNewHint.hidden = false;
       thumbFileInput.value = '';
+      thumbPreview.innerHTML = '';
+      thumbPreview.textContent = '-';
       setDialogStatus(appDialogStatus, '');
       appDialog.showModal();
     }
@@ -990,10 +1089,17 @@ function renderAdminPage() {
       appForm.elements.slug.disabled = true;
       appDialogTitle.textContent = '編集：' + app.title;
       thumbSection.hidden = false;
+      thumbNewHint.hidden = true;
       thumbFileInput.value = '';
       updateThumbPreview(app);
       setDialogStatus(appDialogStatus, '');
       appDialog.showModal();
+    }
+
+    function openCategoryDialog() {
+      categoryForm.reset();
+      setDialogStatus(categoryDialogStatus, '');
+      categoryDialog.showModal();
     }
 
     function updateThumbPreview(app) {
@@ -1008,19 +1114,40 @@ function renderAdminPage() {
       thumbPreview.appendChild(img);
     }
 
+    async function ensureSavedForThumbnail() {
+      if (editingSlug) return editingSlug;
+
+      if (!appForm.reportValidity()) {
+        throw new Error('必須項目を入力してください。');
+      }
+
+      const payload = Object.fromEntries(new FormData(appForm).entries());
+      await request('/api/apps', { method: 'POST', body: payload }, { statusEl: appDialogStatus });
+
+      editingSlug = payload.slug;
+      appForm.elements.slug.disabled = true;
+      appDialogTitle.textContent = '編集：' + payload.title;
+      thumbNewHint.hidden = true;
+      await loadApps();
+
+      return editingSlug;
+    }
+
     async function handleThumbFileChange(event) {
       const file = event.target.files && event.target.files[0];
-      if (!file || !editingSlug) return;
+      if (!file) return;
 
       try {
         setDialogStatus(appDialogStatus, '画像を変換中...');
         const dataUrl = await fileToPngDataUrl(file);
+        const slug = await ensureSavedForThumbnail();
+
         await request('/api/thumbnails/upload', {
           method: 'POST',
-          body: { slug: editingSlug, dataUrl },
+          body: { slug, dataUrl },
         }, { statusEl: appDialogStatus });
 
-        const app = apps.find((item) => item.slug === editingSlug);
+        const app = apps.find((item) => item.slug === slug);
         if (app) updateThumbPreview(app);
         await loadApps();
         refreshPreview();
@@ -1054,12 +1181,12 @@ function renderAdminPage() {
     }
 
     async function captureThumbnail() {
-      if (!editingSlug) return;
       try {
+        const slug = await ensureSavedForThumbnail();
         setDialogStatus(appDialogStatus, '撮影中...');
-        await request('/api/refresh', { method: 'POST', body: { slug: editingSlug } }, { statusEl: appDialogStatus });
+        await request('/api/refresh', { method: 'POST', body: { slug } }, { statusEl: appDialogStatus });
         await loadApps();
-        const app = apps.find((item) => item.slug === editingSlug);
+        const app = apps.find((item) => item.slug === slug);
         if (app) updateThumbPreview(app);
         refreshPreview();
         setDialogStatus(appDialogStatus, '撮影しました。');
