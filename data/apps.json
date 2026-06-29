@@ -66,7 +66,7 @@
     "slug": "randmaker",
     "category": "tool",
     "title": "ランダム文字列メーカー",
-    "description": "ランダム文字列生成ツールです。APIキー、パスワード、ランダムな数字・日本語を出すなど様々な用途で使えます。",
+    "description": "ランダム文字列生成ツールです。APIキーやパスワード生成、ランダムな数字・日本語を出すなど様々な用途で使えます。",
     "url": "https://randmaker.ik-neet.com/",
     "initial": "R",
     "focus": "auto"
