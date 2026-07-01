@@ -80,6 +80,16 @@
     "hidden": false
   },
   {
+    "slug": "img-monotonize",
+    "category": "tool",
+    "title": "画像モノトーン変換",
+    "description": "画像をグレースケール・モノトーンに変換できるツール。明るさやコントラストの調整も可能で、処理はすべてブラウザ内で完結します。",
+    "url": "https://img-monotonize.ik-neet.com/",
+    "initial": "モ",
+    "focus": "auto",
+    "hidden": false
+  },
+  {
     "slug": "mimikopi-lab",
     "category": "desktop",
     "title": "耳コピラボ",
