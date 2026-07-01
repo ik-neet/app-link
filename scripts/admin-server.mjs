@@ -770,12 +770,17 @@ function renderAdminPage() {
       z-index: 5;
     }
 
+    .menu[hidden] {
+      display: none;
+    }
+
     .menu button {
       justify-content: flex-start;
       text-align: left;
     }
 
-    .app-row.is-hidden {
+    .app-row.is-hidden .thumb,
+    .app-row.is-hidden .meta {
       opacity: 0.5;
     }
 
@@ -865,6 +870,9 @@ function renderAdminPage() {
       <h1>App Link Admin</h1>
       <div class="actions">
         <button id="reloadButton">再読み込み</button>
+        <button id="addCategoryButton">カテゴリ追加</button>
+        <button id="addButton">新規追加</button>
+        <button id="githubButton" class="primary">GitHub反映</button>
         <div class="menu-wrap">
           <button id="moreMenuButton" aria-haspopup="true" aria-expanded="false">・・・</button>
           <div id="moreMenu" class="menu" hidden>
@@ -872,9 +880,6 @@ function renderAdminPage() {
             <button id="refreshButton">全更新</button>
           </div>
         </div>
-        <button id="addCategoryButton">カテゴリ追加</button>
-        <button id="addButton" class="primary">新規追加</button>
-        <button id="githubButton">GitHub反映</button>
       </div>
     </div>
   </header>
@@ -900,7 +905,7 @@ function renderAdminPage() {
       <h2 class="modal-title" id="appDialogTitle">新規追加</h2>
 
       <div id="thumbSection" hidden>
-        <p id="thumbNewHint" class="status" hidden>撮影/画像選択を行うと先にアプリが保存されます。</p>
+        <p id="thumbNewHint" class="status" hidden>「撮影」を行うと先にアプリが保存されます。画像選択・貼り付け・編集は「保存」を押すまで確定しません。</p>
         <div class="thumb-preview-row">
           <div class="thumb-preview" id="thumbPreview">-</div>
           <div class="thumb-tools">
@@ -914,6 +919,7 @@ function renderAdminPage() {
             <div class="thumb-tool-row">
               <button type="button" id="captureButton">撮影</button>
               <button type="button" id="thumbEditButton">画像を編集</button>
+              <button type="button" id="thumbRevertButton" hidden>元に戻す</button>
             </div>
           </div>
         </div>
@@ -1017,7 +1023,7 @@ function renderAdminPage() {
         <button type="button" id="editorCancelButton">キャンセル</button>
       </div>
       <div class="form-actions">
-        <button type="button" id="editorApplyButton" class="primary" style="grid-column: 1 / -1;">適用してアップロード</button>
+        <button type="button" id="editorApplyButton" class="primary" style="grid-column: 1 / -1;">この内容を反映</button>
       </div>
       <p id="editorStatus" class="status"></p>
     </div>
@@ -1038,6 +1044,7 @@ function renderAdminPage() {
     const thumbFileInput = document.querySelector('#thumbFileInput');
     const captureUrlInput = document.querySelector('#captureUrlInput');
     const thumbEditButton = document.querySelector('#thumbEditButton');
+    const thumbRevertButton = document.querySelector('#thumbRevertButton');
 
     const categoryDialog = document.querySelector('#categoryDialog');
     const categoryDialogStatus = document.querySelector('#categoryDialogStatus');
@@ -1061,6 +1068,7 @@ function renderAdminPage() {
     let categories = [];
     let editingSlug = null;
     let editorState = null;
+    let pendingThumbnailDataUrl = null;
 
     document.querySelector('#reloadButton').addEventListener('click', loadApps);
     document.querySelector('#thumbsButton').addEventListener('click', () => {
@@ -1111,6 +1119,7 @@ function renderAdminPage() {
     document.querySelector('#captureButton').addEventListener('click', captureThumbnail);
     thumbFileInput.addEventListener('change', handleThumbFileChange);
     thumbEditButton.addEventListener('click', openEditorForCurrentThumbnail);
+    thumbRevertButton.addEventListener('click', revertPendingThumbnail);
 
     document.addEventListener('paste', async (event) => {
       if (!appDialog.open) return;
@@ -1124,7 +1133,7 @@ function renderAdminPage() {
           event.preventDefault();
           try {
             const dataUrl = await readFileAsDataUrl(file);
-            openImageEditor(dataUrl, handleEditedImage);
+            openImageEditor(dataUrl, stageEditedThumbnail);
           } catch (error) {
             setDialogStatus(appDialogStatus, error.message, true);
           }
@@ -1160,6 +1169,16 @@ function renderAdminPage() {
       const endpoint = editingSlug ? '/api/apps/' + encodeURIComponent(editingSlug) : '/api/apps';
       const method = editingSlug ? 'PUT' : 'POST';
       await request(endpoint, { method, body: payload }, { statusEl: appDialogStatus });
+      const savedSlug = editingSlug || payload.slug;
+
+      if (pendingThumbnailDataUrl) {
+        await request('/api/thumbnails/upload', {
+          method: 'POST',
+          body: { slug: savedSlug, dataUrl: pendingThumbnailDataUrl },
+        }, { statusEl: appDialogStatus });
+        pendingThumbnailDataUrl = null;
+      }
+
       setStatus(editingSlug ? '更新しました。' : '追加しました。');
       appDialog.close();
       await loadApps();
@@ -1293,6 +1312,8 @@ function renderAdminPage() {
       captureUrlInput.value = '';
       thumbPreview.innerHTML = '';
       thumbPreview.textContent = '-';
+      pendingThumbnailDataUrl = null;
+      thumbRevertButton.hidden = true;
       setDialogStatus(appDialogStatus, '');
       appDialog.showModal();
     }
@@ -1312,6 +1333,8 @@ function renderAdminPage() {
       thumbNewHint.hidden = true;
       thumbFileInput.value = '';
       captureUrlInput.value = '';
+      pendingThumbnailDataUrl = null;
+      thumbRevertButton.hidden = true;
       updateThumbPreview(app);
       setDialogStatus(appDialogStatus, '');
       appDialog.showModal();
@@ -1360,7 +1383,7 @@ function renderAdminPage() {
 
       try {
         const dataUrl = await readFileAsDataUrl(file);
-        openImageEditor(dataUrl, handleEditedImage);
+        openImageEditor(dataUrl, stageEditedThumbnail);
       } catch (error) {
         setDialogStatus(appDialogStatus, error.message, true);
       } finally {
@@ -1383,27 +1406,31 @@ function renderAdminPage() {
         setDialogStatus(appDialogStatus, '編集できるサムネイル画像がありません。先に撮影するか画像を選択してください。', true);
         return;
       }
-      openImageEditor(img.src, handleEditedImage);
+      openImageEditor(img.src, stageEditedThumbnail);
     }
 
-    async function handleEditedImage(dataUrl) {
-      try {
-        setDialogStatus(appDialogStatus, '保存中...');
-        const slug = await ensureSavedForThumbnail();
+    function stageEditedThumbnail(dataUrl) {
+      pendingThumbnailDataUrl = dataUrl;
+      thumbPreview.innerHTML = '';
+      const img = document.createElement('img');
+      img.alt = '';
+      img.src = dataUrl;
+      thumbPreview.appendChild(img);
+      thumbRevertButton.hidden = false;
+      setDialogStatus(appDialogStatus, '画像を変更しました。「保存」を押すと確定します。');
+    }
 
-        await request('/api/thumbnails/upload', {
-          method: 'POST',
-          body: { slug, dataUrl },
-        }, { statusEl: appDialogStatus });
-
-        const app = apps.find((item) => item.slug === slug);
-        if (app) updateThumbPreview(app);
-        await loadApps();
-        refreshPreview();
-        setDialogStatus(appDialogStatus, 'サムネイルを更新しました。');
-      } catch (error) {
-        setDialogStatus(appDialogStatus, error.message, true);
+    function revertPendingThumbnail() {
+      pendingThumbnailDataUrl = null;
+      thumbRevertButton.hidden = true;
+      const app = editingSlug && apps.find((item) => item.slug === editingSlug);
+      if (app) {
+        updateThumbPreview(app);
+      } else {
+        thumbPreview.innerHTML = '';
+        thumbPreview.textContent = '-';
       }
+      setDialogStatus(appDialogStatus, '元に戻しました。');
     }
 
     async function captureThumbnail() {
@@ -1413,6 +1440,8 @@ function renderAdminPage() {
         const overrideUrl = captureUrlInput.value.trim();
         const body = overrideUrl ? { slug, url: overrideUrl } : { slug };
         await request('/api/refresh', { method: 'POST', body }, { statusEl: appDialogStatus });
+        pendingThumbnailDataUrl = null;
+        thumbRevertButton.hidden = true;
         await loadApps();
         const app = apps.find((item) => item.slug === slug);
         if (app) updateThumbPreview(app);

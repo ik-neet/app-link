@@ -426,7 +426,7 @@ function renderIndex(apps, cats) {
     .join('\n');
 
   const categoryTabRules = cats
-    .map((category) => `    .category-tab.${escapeHtml(category.className)} { border-color: var(--cat-${escapeHtml(category.className)}); color: var(--cat-${escapeHtml(category.className)}); }`)
+    .map((category) => `    .category-tab.${escapeHtml(category.className)} { border-bottom-color: var(--cat-${escapeHtml(category.className)}); }`)
     .join('\n');
 
   const categoryNav = renderCategoryNav(cats);
@@ -473,6 +473,7 @@ ${categoryColorVars}
     }
 
     header,
+    nav,
     main,
     footer {
       width: min(960px, calc(100% - 40px));
@@ -517,6 +518,7 @@ ${categoryColorVars}
       font-size: 22px;
       line-height: 1.3;
       letter-spacing: 0;
+      scroll-margin-top: 64px;
     }
 
     .section-heading .count {
@@ -524,14 +526,11 @@ ${categoryColorVars}
       font-size: 13px;
     }
 
-    .app-section {
-      scroll-margin-top: 64px;
-    }
-
     .category-nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      align-items: baseline;
+      gap: 22px;
       padding: 14px 0;
       position: sticky;
       top: 0;
@@ -542,19 +541,17 @@ ${categoryColorVars}
     }
 
     .category-tab {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
+      display: inline-block;
+      padding-bottom: 4px;
+      border-bottom: 2px solid transparent;
       color: var(--text);
       text-decoration: none;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 700;
-      background: #fff;
+      letter-spacing: 0;
     }
 
-    .category-tab:hover { background: var(--surface-hover); }
+    .category-tab:hover { color: var(--accent); }
 
 ${categoryTabRules}
 

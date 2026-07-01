@@ -42,6 +42,7 @@
     }
 
     header,
+    nav,
     main,
     footer {
       width: min(960px, calc(100% - 40px));
@@ -86,6 +87,7 @@
       font-size: 22px;
       line-height: 1.3;
       letter-spacing: 0;
+      scroll-margin-top: 64px;
     }
 
     .section-heading .count {
@@ -93,14 +95,11 @@
       font-size: 13px;
     }
 
-    .app-section {
-      scroll-margin-top: 64px;
-    }
-
     .category-nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      align-items: baseline;
+      gap: 22px;
       padding: 14px 0;
       position: sticky;
       top: 0;
@@ -111,23 +110,21 @@
     }
 
     .category-tab {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
+      display: inline-block;
+      padding-bottom: 4px;
+      border-bottom: 2px solid transparent;
       color: var(--text);
       text-decoration: none;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 700;
-      background: #fff;
+      letter-spacing: 0;
     }
 
-    .category-tab:hover { background: var(--surface-hover); }
+    .category-tab:hover { color: var(--accent); }
 
-    .category-tab.game { border-color: var(--cat-game); color: var(--cat-game); }
-    .category-tab.tool { border-color: var(--cat-tool); color: var(--cat-tool); }
-    .category-tab.desktop { border-color: var(--cat-desktop); color: var(--cat-desktop); }
+    .category-tab.game { border-bottom-color: var(--cat-game); }
+    .category-tab.tool { border-bottom-color: var(--cat-tool); }
+    .category-tab.desktop { border-bottom-color: var(--cat-desktop); }
 
     .section-heading.game h2 { border-bottom: 2px solid var(--cat-game); }
     .section-heading.tool h2 { border-bottom: 2px solid var(--cat-tool); }
@@ -251,7 +248,7 @@
   <section class="app-section" aria-labelledby="games-heading">
     <div class="section-heading game">
       <h2 id="games-heading">ゲーム</h2>
-      <span class="count">3件</span>
+      <span class="count">4件</span>
     </div>
 
     <ul class="app-items">
@@ -283,6 +280,17 @@
           <span class="app-text">
             <strong class="app-title">Wikipediaカードバトル</strong>
             <span class="app-description">Wikipediaの情報を使った対戦型カードゲーム。知識と戦略で勝負。</span>
+          </span>
+          <span class="app-action">開く</span>
+        </a>
+      </li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://quiz-battle-9a6fa.web.app/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/quiz-battle.png" alt="" /></span>
+          <span class="app-text">
+            <strong class="app-title">クイズバトル</strong>
+            <span class="app-description">リアルタイムで対戦できるクイズゲーム。</span>
           </span>
           <span class="app-action">開く</span>
         </a>

@@ -37,7 +37,7 @@
     "url": "https://quiz-battle-9a6fa.web.app/",
     "initial": "Q",
     "focus": "center",
-    "hidden": true
+    "hidden": false
   },
   {
     "slug": "randmaker",
