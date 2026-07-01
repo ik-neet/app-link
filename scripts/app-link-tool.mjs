@@ -197,7 +197,8 @@ async function removeApp(input) {
 async function buildIndex(existingApps) {
   const apps = existingApps || await readApps();
   const cats = await readCategories();
-  await writeFile(indexPath, renderIndex(apps, cats), 'utf8');
+  const visibleApps = apps.filter((app) => !app.hidden);
+  await writeFile(indexPath, renderIndex(visibleApps, cats), 'utf8');
   console.log('Built index.html');
   return indexPath;
 }
@@ -217,11 +218,14 @@ async function generateThumbnails(input) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
 
+  const urlOverride = input.slug ? String(input.url || '').trim() : '';
+
   for (const app of targets) {
-    console.log(`Capturing ${app.slug}...`);
+    const captureUrl = urlOverride || app.url;
+    console.log(`Capturing ${app.slug} (${captureUrl})...`);
 
     try {
-      await page.goto(app.url, {
+      await page.goto(captureUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 45000,
       });
@@ -365,6 +369,7 @@ function normalizeApp(input) {
     url: input.url,
     initial: input.initial,
     focus: input.focus || 'auto',
+    hidden: Boolean(input.hidden),
   };
 
   const requiredFields = ['slug', 'category', 'title', 'description', 'url', 'initial'];
@@ -419,6 +424,12 @@ function renderIndex(apps, cats) {
   const categoryHeadingRules = cats
     .map((category) => `    .section-heading.${escapeHtml(category.className)} h2 { border-bottom: 2px solid var(--cat-${escapeHtml(category.className)}); }`)
     .join('\n');
+
+  const categoryTabRules = cats
+    .map((category) => `    .category-tab.${escapeHtml(category.className)} { border-color: var(--cat-${escapeHtml(category.className)}); color: var(--cat-${escapeHtml(category.className)}); }`)
+    .join('\n');
+
+  const categoryNav = renderCategoryNav(cats);
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -512,6 +523,40 @@ ${categoryColorVars}
       color: var(--muted);
       font-size: 13px;
     }
+
+    .app-section {
+      scroll-margin-top: 64px;
+    }
+
+    .category-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 0;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: rgba(247, 250, 252, 0.96);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .category-tab {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .category-tab:hover { background: var(--surface-hover); }
+
+${categoryTabRules}
 
 ${categoryHeadingRules}
 
@@ -623,6 +668,8 @@ ${categoryHeadingRules}
   <p class="lead">制作したWebアプリの一覧です。</p>
 </header>
 
+${categoryNav}
+
 <main>
 ${sections}
 </main>
@@ -634,6 +681,16 @@ ${sections}
 </body>
 </html>
 `;
+}
+
+function renderCategoryNav(cats) {
+  const tabs = cats
+    .map((category) => `    <a class="category-tab ${escapeHtml(category.className)}" href="#${category.id}s-heading">${escapeHtml(category.label)}</a>`)
+    .join('\n');
+
+  return `<nav class="category-nav" aria-label="カテゴリ">
+${tabs}
+</nav>`;
 }
 
 function renderSection(category, apps) {

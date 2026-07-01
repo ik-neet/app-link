@@ -93,6 +93,42 @@
       font-size: 13px;
     }
 
+    .app-section {
+      scroll-margin-top: 64px;
+    }
+
+    .category-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 0;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: rgba(247, 250, 252, 0.96);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .category-tab {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .category-tab:hover { background: var(--surface-hover); }
+
+    .category-tab.game { border-color: var(--cat-game); color: var(--cat-game); }
+    .category-tab.tool { border-color: var(--cat-tool); color: var(--cat-tool); }
+    .category-tab.desktop { border-color: var(--cat-desktop); color: var(--cat-desktop); }
+
     .section-heading.game h2 { border-bottom: 2px solid var(--cat-game); }
     .section-heading.tool h2 { border-bottom: 2px solid var(--cat-tool); }
     .section-heading.desktop h2 { border-bottom: 2px solid var(--cat-desktop); }
@@ -205,6 +241,12 @@
   <p class="lead">制作したWebアプリの一覧です。</p>
 </header>
 
+<nav class="category-nav" aria-label="カテゴリ">
+    <a class="category-tab game" href="#games-heading">ゲーム</a>
+    <a class="category-tab tool" href="#tools-heading">ツール</a>
+    <a class="category-tab desktop" href="#desktops-heading">デスクトップアプリ</a>
+</nav>
+
 <main>
   <section class="app-section" aria-labelledby="games-heading">
     <div class="section-heading game">
@@ -267,22 +309,22 @@
 
     <ul class="app-items">
       <li class="app-item">
-        <a class="app-link" href="https://talk-theme.ik-neet.com/" target="_blank">
-          <span class="app-thumb"><img src="assets/thumbs/talk-theme.png" alt="" /></span>
+        <a class="app-link" href="https://randmaker.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/randmaker.png" alt="" /></span>
           <span class="app-text">
-            <strong class="app-title">トークテーマガチャ</strong>
-            <span class="app-description">会話に困らないためのランダムトークテーマ生成アプリ。</span>
+            <strong class="app-title">ランダム文字列メーカー</strong>
+            <span class="app-description">ランダム文字列生成ツールです。APIキーやパスワード生成、ランダムな数字・日本語を出すなど様々な用途で使えます。</span>
           </span>
           <span class="app-action">開く</span>
         </a>
       </li>
 
       <li class="app-item">
-        <a class="app-link" href="https://roulette.ik-neet.com/" target="_blank">
-          <span class="app-thumb"><img src="assets/thumbs/roulette.png" alt="" /></span>
+        <a class="app-link" href="https://talk-theme.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/talk-theme.png" alt="" /></span>
           <span class="app-text">
-            <strong class="app-title">ルーレット</strong>
-            <span class="app-description">シンプルで使いやすいランダムルーレットアプリ。</span>
+            <strong class="app-title">トークテーマガチャ</strong>
+            <span class="app-description">会話に困らないためのランダムトークテーマ生成アプリ。</span>
           </span>
           <span class="app-action">開く</span>
         </a>
@@ -300,11 +342,11 @@
       </li>
 
       <li class="app-item">
-        <a class="app-link" href="https://randmaker.ik-neet.com/" target="_blank">
-          <span class="app-thumb"><img src="assets/thumbs/randmaker.png" alt="" /></span>
+        <a class="app-link" href="https://roulette.ik-neet.com/" target="_blank">
+          <span class="app-thumb"><img src="assets/thumbs/roulette.png" alt="" /></span>
           <span class="app-text">
-            <strong class="app-title">ランダム文字列メーカー</strong>
-            <span class="app-description">ランダム文字列生成ツールです。APIキーやパスワード生成、ランダムな数字・日本語を出すなど様々な用途で使えます。</span>
+            <strong class="app-title">ルーレット</strong>
+            <span class="app-description">シンプルで使いやすいランダムルーレットアプリ。</span>
           </span>
           <span class="app-action">開く</span>
         </a>

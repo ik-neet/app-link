@@ -6,7 +6,8 @@
     "description": "市町村名を見て、それが日本のどこにあるのか当てるクイズ",
     "url": "https://pin-quiz.ik-neet.com/",
     "initial": "市",
-    "focus": "auto"
+    "focus": "auto",
+    "hidden": false
   },
   {
     "slug": "zennin-icchi",
@@ -15,7 +16,8 @@
     "description": "参加者全員の価値観を合わせる例のゲーム",
     "url": "https://zennin-icchi.ik-neet.com/",
     "initial": "全",
-    "focus": "auto"
+    "focus": "auto",
+    "hidden": false
   },
   {
     "slug": "wikipedia-card-battle",
@@ -24,7 +26,8 @@
     "description": "Wikipediaの情報を使った対戦型カードゲーム。知識と戦略で勝負。",
     "url": "https://wikipedia-card-battle.ik-neet.com/",
     "initial": "W",
-    "focus": "center"
+    "focus": "center",
+    "hidden": false
   },
   {
     "slug": "quiz-battle",
@@ -33,34 +36,8 @@
     "description": "リアルタイムで対戦できるクイズゲーム。",
     "url": "https://quiz-battle-9a6fa.web.app/",
     "initial": "Q",
-    "focus": "center"
-  },
-  {
-    "slug": "talk-theme",
-    "category": "tool",
-    "title": "トークテーマガチャ",
-    "description": "会話に困らないためのランダムトークテーマ生成アプリ。",
-    "url": "https://talk-theme.ik-neet.com/",
-    "initial": "話",
-    "focus": "auto"
-  },
-  {
-    "slug": "roulette",
-    "category": "tool",
-    "title": "ルーレット",
-    "description": "シンプルで使いやすいランダムルーレットアプリ。",
-    "url": "https://roulette.ik-neet.com/",
-    "initial": "R",
-    "focus": "center"
-  },
-  {
-    "slug": "warikan",
-    "category": "tool",
-    "title": "割り勘管理",
-    "description": "グループでの支払いを簡単に管理できる割り勘アプリ。",
-    "url": "https://warikan.ik-neet.com/",
-    "initial": "割",
-    "focus": "top"
+    "focus": "center",
+    "hidden": false
   },
   {
     "slug": "randmaker",
@@ -69,7 +46,38 @@
     "description": "ランダム文字列生成ツールです。APIキーやパスワード生成、ランダムな数字・日本語を出すなど様々な用途で使えます。",
     "url": "https://randmaker.ik-neet.com/",
     "initial": "R",
-    "focus": "auto"
+    "focus": "auto",
+    "hidden": false
+  },
+  {
+    "slug": "talk-theme",
+    "category": "tool",
+    "title": "トークテーマガチャ",
+    "description": "会話に困らないためのランダムトークテーマ生成アプリ。",
+    "url": "https://talk-theme.ik-neet.com/",
+    "initial": "話",
+    "focus": "auto",
+    "hidden": false
+  },
+  {
+    "slug": "warikan",
+    "category": "tool",
+    "title": "割り勘管理",
+    "description": "グループでの支払いを簡単に管理できる割り勘アプリ。",
+    "url": "https://warikan.ik-neet.com/",
+    "initial": "割",
+    "focus": "top",
+    "hidden": false
+  },
+  {
+    "slug": "roulette",
+    "category": "tool",
+    "title": "ルーレット",
+    "description": "シンプルで使いやすいランダムルーレットアプリ。",
+    "url": "https://roulette.ik-neet.com/",
+    "initial": "R",
+    "focus": "center",
+    "hidden": false
   },
   {
     "slug": "mimikopi-lab",
@@ -78,6 +86,7 @@
     "description": "曲をボーカル・ギター・ベースなど6パートに分離し、再生速度やピッチ、EQ、メトロノームを使って耳コピを助けるデスクトップアプリ。",
     "url": "https://mimikopi-lab.ik-neet.com/",
     "initial": "M",
-    "focus": "auto"
+    "focus": "auto",
+    "hidden": false
   }
 ]

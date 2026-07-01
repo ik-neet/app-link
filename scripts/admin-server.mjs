@@ -97,7 +97,7 @@ const server = createServer(async (request, response) => {
 
     if (request.method === 'POST' && url.pathname === '/api/thumbnails') {
       const body = await readJson(request);
-      await generateThumbnails(body.slug ? { slug: body.slug } : {});
+      await generateThumbnails(body.slug ? { slug: body.slug, url: body.url } : {});
       await buildIndex();
       sendJson(response, { ok: true, apps: await readApps() });
       return;
@@ -113,7 +113,7 @@ const server = createServer(async (request, response) => {
 
     if (request.method === 'POST' && url.pathname === '/api/refresh') {
       const body = await readJson(request);
-      await generateThumbnails(body.slug ? { slug: body.slug } : {});
+      await generateThumbnails(body.slug ? { slug: body.slug, url: body.url } : {});
       await buildIndex();
       sendJson(response, { ok: true, apps: await readApps() });
       return;
@@ -739,6 +739,96 @@ function renderAdminPage() {
       border-style: dashed;
     }
 
+    .thumb-tools .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .thumb-tools .thumb-tool-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .menu-wrap {
+      position: relative;
+    }
+
+    .menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 170px;
+      padding: 6px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 10px 28px rgba(20, 45, 70, 0.18);
+      z-index: 5;
+    }
+
+    .menu button {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .app-row.is-hidden {
+      opacity: 0.5;
+    }
+
+    .badge-hidden {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 3px;
+      background: #f5e6d3;
+      color: #8a5a1f;
+      font-size: 11px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    dialog.image-editor-dialog {
+      width: min(640px, calc(100vw - 32px));
+    }
+
+    .editor-canvas-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+      background: repeating-conic-gradient(#e7edf2 0% 25%, #f6f8fb 0% 50%) 0 0 / 20px 20px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    #editorCanvas {
+      max-width: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .editor-controls {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .editor-controls label {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    .editor-controls input[type="range"] {
+      width: 100%;
+    }
+
     @media (max-width: 640px) {
       .bar {
         align-items: flex-start;
@@ -775,8 +865,13 @@ function renderAdminPage() {
       <h1>App Link Admin</h1>
       <div class="actions">
         <button id="reloadButton">再読み込み</button>
-        <button id="thumbsButton">全サムネイル生成</button>
-        <button id="refreshButton" class="primary">全更新</button>
+        <div class="menu-wrap">
+          <button id="moreMenuButton" aria-haspopup="true" aria-expanded="false">・・・</button>
+          <div id="moreMenu" class="menu" hidden>
+            <button id="thumbsButton">全サムネイル生成</button>
+            <button id="refreshButton">全更新</button>
+          </div>
+        </div>
         <button id="addCategoryButton">カテゴリ追加</button>
         <button id="addButton" class="primary">新規追加</button>
         <button id="githubButton">GitHub反映</button>
@@ -812,7 +907,14 @@ function renderAdminPage() {
             <label>画像を選択
               <input type="file" id="thumbFileInput" accept="image/*" />
             </label>
-            <button type="button" id="captureButton">撮影</button>
+            <p class="hint">この欄にフォーカスした状態で Ctrl+V すると、クリップボードの画像を貼り付けられます。</p>
+            <label>撮影用URL（任意・空欄で通常のURLを使用）
+              <input type="url" id="captureUrlInput" placeholder="https://example.com/some-page" />
+            </label>
+            <div class="thumb-tool-row">
+              <button type="button" id="captureButton">撮影</button>
+              <button type="button" id="thumbEditButton">画像を編集</button>
+            </div>
           </div>
         </div>
       </div>
@@ -893,6 +995,34 @@ function renderAdminPage() {
     </div>
   </dialog>
 
+  <dialog id="imageEditorDialog" class="image-editor-dialog">
+    <div class="modal-inner">
+      <div class="modal-close-row">
+        <button type="button" id="editorCloseTop" aria-label="閉じる">×</button>
+      </div>
+      <h2 class="modal-title">サムネイル編集</h2>
+
+      <div class="editor-canvas-wrap">
+        <canvas id="editorCanvas"></canvas>
+      </div>
+
+      <div class="editor-controls">
+        <label>明るさ <input type="range" id="editBrightness" min="-100" max="100" value="0" /></label>
+        <label>コントラスト <input type="range" id="editContrast" min="-100" max="100" value="0" /></label>
+        <label>彩度 <input type="range" id="editSaturation" min="-100" max="100" value="0" /></label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="editorResetButton">リセット</button>
+        <button type="button" id="editorCancelButton">キャンセル</button>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="editorApplyButton" class="primary" style="grid-column: 1 / -1;">適用してアップロード</button>
+      </div>
+      <p id="editorStatus" class="status"></p>
+    </div>
+  </dialog>
+
   <script>
     const lists = document.querySelector('#lists');
     const preview = document.querySelector('#preview');
@@ -906,6 +1036,8 @@ function renderAdminPage() {
     const thumbNewHint = document.querySelector('#thumbNewHint');
     const thumbPreview = document.querySelector('#thumbPreview');
     const thumbFileInput = document.querySelector('#thumbFileInput');
+    const captureUrlInput = document.querySelector('#captureUrlInput');
+    const thumbEditButton = document.querySelector('#thumbEditButton');
 
     const categoryDialog = document.querySelector('#categoryDialog');
     const categoryDialogStatus = document.querySelector('#categoryDialogStatus');
@@ -915,14 +1047,44 @@ function renderAdminPage() {
     const githubDialogStatus = document.querySelector('#githubDialogStatus');
     const commitMessageInput = document.querySelector('#commitMessage');
 
+    const moreMenuButton = document.querySelector('#moreMenuButton');
+    const moreMenu = document.querySelector('#moreMenu');
+
+    const imageEditorDialog = document.querySelector('#imageEditorDialog');
+    const editorCanvas = document.querySelector('#editorCanvas');
+    const editorStatus = document.querySelector('#editorStatus');
+    const editBrightness = document.querySelector('#editBrightness');
+    const editContrast = document.querySelector('#editContrast');
+    const editSaturation = document.querySelector('#editSaturation');
+
     let apps = [];
     let categories = [];
     let editingSlug = null;
+    let editorState = null;
 
     document.querySelector('#reloadButton').addEventListener('click', loadApps);
-    document.querySelector('#thumbsButton').addEventListener('click', () => runAction('/api/thumbnails', {}, '全サムネイルを生成しました。'));
-    document.querySelector('#refreshButton').addEventListener('click', () => runAction('/api/refresh', {}, '全更新しました。'));
+    document.querySelector('#thumbsButton').addEventListener('click', () => {
+      closeMoreMenu();
+      runAction('/api/thumbnails', {}, '全サムネイルを生成しました。');
+    });
+    document.querySelector('#refreshButton').addEventListener('click', () => {
+      closeMoreMenu();
+      runAction('/api/refresh', {}, '全更新しました。');
+    });
     document.querySelector('#previewButton').addEventListener('click', refreshPreview);
+
+    moreMenuButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isHidden = moreMenu.hidden;
+      moreMenu.hidden = !isHidden;
+      moreMenuButton.setAttribute('aria-expanded', String(isHidden));
+    });
+    document.addEventListener('click', closeMoreMenu);
+
+    function closeMoreMenu() {
+      moreMenu.hidden = true;
+      moreMenuButton.setAttribute('aria-expanded', 'false');
+    }
 
     document.querySelector('#addButton').addEventListener('click', openAddDialog);
     document.querySelector('#appDialogCancel').addEventListener('click', () => appDialog.close());
@@ -948,6 +1110,39 @@ function renderAdminPage() {
 
     document.querySelector('#captureButton').addEventListener('click', captureThumbnail);
     thumbFileInput.addEventListener('change', handleThumbFileChange);
+    thumbEditButton.addEventListener('click', openEditorForCurrentThumbnail);
+
+    document.addEventListener('paste', async (event) => {
+      if (!appDialog.open) return;
+      const items = event.clipboardData && event.clipboardData.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (!file) continue;
+          event.preventDefault();
+          try {
+            const dataUrl = await readFileAsDataUrl(file);
+            openImageEditor(dataUrl, handleEditedImage);
+          } catch (error) {
+            setDialogStatus(appDialogStatus, error.message, true);
+          }
+          return;
+        }
+      }
+    });
+
+    document.querySelector('#editorCloseTop').addEventListener('click', () => imageEditorDialog.close());
+    document.querySelector('#editorCancelButton').addEventListener('click', () => imageEditorDialog.close());
+    document.querySelector('#editorResetButton').addEventListener('click', resetEditorAdjustments);
+    document.querySelector('#editorApplyButton').addEventListener('click', applyImageEditor);
+    imageEditorDialog.addEventListener('click', (event) => {
+      if (event.target === imageEditorDialog) imageEditorDialog.close();
+    });
+    [editBrightness, editContrast, editSaturation].forEach((input) => {
+      input.addEventListener('input', drawEditor);
+    });
 
     categoryForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -1011,7 +1206,11 @@ function renderAdminPage() {
       });
 
       lists.querySelectorAll('[data-thumbnail]').forEach((button) => {
-        button.addEventListener('click', () => runAction('/api/thumbnails', { slug: button.dataset.thumbnail }, 'サムネイルを生成しました。'));
+        button.addEventListener('click', () => captureRowThumbnail(button.dataset.thumbnail));
+      });
+
+      lists.querySelectorAll('[data-visibility]').forEach((button) => {
+        button.addEventListener('click', () => toggleVisibility(button.dataset.visibility));
       });
 
       lists.querySelectorAll('[data-remove]').forEach((button) => {
@@ -1034,6 +1233,24 @@ function renderAdminPage() {
       });
     }
 
+    async function captureRowThumbnail(slug) {
+      const app = apps.find((item) => item.slug === slug);
+      const input = window.prompt('撮影するURL（空欄で通常のURLを使用）', app ? app.url : '');
+      if (input === null) return;
+      const overrideUrl = input.trim();
+      const body = overrideUrl ? { slug, url: overrideUrl } : { slug };
+      await runAction('/api/thumbnails', body, 'サムネイルを生成しました。');
+    }
+
+    async function toggleVisibility(slug) {
+      const app = apps.find((item) => item.slug === slug);
+      if (!app) return;
+      await request('/api/apps/' + encodeURIComponent(slug), { method: 'PUT', body: { hidden: !app.hidden } });
+      setStatus(app.hidden ? '表示にしました。' : '非表示にしました。');
+      await loadApps();
+      refreshPreview();
+    }
+
     async function moveApp(slug, direction) {
       await request('/api/apps/order', { method: 'PUT', body: { slug, direction } });
       setStatus('並び順を変更しました。');
@@ -1043,11 +1260,12 @@ function renderAdminPage() {
 
     function renderRow(app, isFirst, isLast) {
       const thumbSrc = '/assets/thumbs/' + encodeURIComponent(app.slug) + '.png?ts=' + Date.now();
+      const hiddenBadge = app.hidden ? '<span class="badge-hidden">非表示</span>' : '';
       return \`
-        <div class="app-row">
+        <div class="app-row \${app.hidden ? 'is-hidden' : ''}">
           <div class="thumb"><img src="\${thumbSrc}" alt="" onerror="this.replaceWith(document.createTextNode('\${escapeHtml(app.initial)}'))"></div>
           <div class="meta">
-            <strong>\${escapeHtml(app.title)}</strong>
+            <strong>\${escapeHtml(app.title)}\${hiddenBadge}</strong>
             <span>\${escapeHtml(app.description)}</span>
             <div class="url">\${escapeHtml(app.url)}</div>
           </div>
@@ -1056,6 +1274,7 @@ function renderAdminPage() {
             <button data-move-down="\${escapeHtml(app.slug)}" \${isLast ? 'disabled' : ''} aria-label="下へ">▼</button>
             <button data-edit="\${escapeHtml(app.slug)}">編集</button>
             <button data-thumbnail="\${escapeHtml(app.slug)}">撮影</button>
+            <button data-visibility="\${escapeHtml(app.slug)}">\${app.hidden ? '表示する' : '非表示にする'}</button>
             <button class="danger" data-remove="\${escapeHtml(app.slug)}">削除</button>
           </div>
         </div>
@@ -1071,6 +1290,7 @@ function renderAdminPage() {
       thumbSection.hidden = false;
       thumbNewHint.hidden = false;
       thumbFileInput.value = '';
+      captureUrlInput.value = '';
       thumbPreview.innerHTML = '';
       thumbPreview.textContent = '-';
       setDialogStatus(appDialogStatus, '');
@@ -1091,6 +1311,7 @@ function renderAdminPage() {
       thumbSection.hidden = false;
       thumbNewHint.hidden = true;
       thumbFileInput.value = '';
+      captureUrlInput.value = '';
       updateThumbPreview(app);
       setDialogStatus(appDialogStatus, '');
       appDialog.showModal();
@@ -1138,8 +1359,36 @@ function renderAdminPage() {
       if (!file) return;
 
       try {
-        setDialogStatus(appDialogStatus, '画像を変換中...');
-        const dataUrl = await fileToPngDataUrl(file);
+        const dataUrl = await readFileAsDataUrl(file);
+        openImageEditor(dataUrl, handleEditedImage);
+      } catch (error) {
+        setDialogStatus(appDialogStatus, error.message, true);
+      } finally {
+        thumbFileInput.value = '';
+      }
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('画像の読み込みに失敗しました。'));
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function openEditorForCurrentThumbnail() {
+      const img = thumbPreview.querySelector('img');
+      if (!img) {
+        setDialogStatus(appDialogStatus, '編集できるサムネイル画像がありません。先に撮影するか画像を選択してください。', true);
+        return;
+      }
+      openImageEditor(img.src, handleEditedImage);
+    }
+
+    async function handleEditedImage(dataUrl) {
+      try {
+        setDialogStatus(appDialogStatus, '保存中...');
         const slug = await ensureSavedForThumbnail();
 
         await request('/api/thumbnails/upload', {
@@ -1154,37 +1403,16 @@ function renderAdminPage() {
         setDialogStatus(appDialogStatus, 'サムネイルを更新しました。');
       } catch (error) {
         setDialogStatus(appDialogStatus, error.message, true);
-      } finally {
-        thumbFileInput.value = '';
       }
-    }
-
-    function fileToPngDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error('画像の読み込みに失敗しました。'));
-        reader.onload = () => {
-          const image = new Image();
-          image.onerror = () => reject(new Error('画像の解析に失敗しました。'));
-          image.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = image.naturalWidth || image.width;
-            canvas.height = image.naturalHeight || image.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          };
-          image.src = reader.result;
-        };
-        reader.readAsDataURL(file);
-      });
     }
 
     async function captureThumbnail() {
       try {
         const slug = await ensureSavedForThumbnail();
         setDialogStatus(appDialogStatus, '撮影中...');
-        await request('/api/refresh', { method: 'POST', body: { slug } }, { statusEl: appDialogStatus });
+        const overrideUrl = captureUrlInput.value.trim();
+        const body = overrideUrl ? { slug, url: overrideUrl } : { slug };
+        await request('/api/refresh', { method: 'POST', body }, { statusEl: appDialogStatus });
         await loadApps();
         const app = apps.find((item) => item.slug === slug);
         if (app) updateThumbPreview(app);
@@ -1193,6 +1421,221 @@ function renderAdminPage() {
       } catch (error) {
         setDialogStatus(appDialogStatus, error.message, true);
       }
+    }
+
+    function openImageEditor(imageSrc, onApply) {
+      const image = new Image();
+      image.onload = () => {
+        const maxWidth = 560;
+        const maxHeight = 360;
+        const ratio = Math.min(maxWidth / image.naturalWidth, maxHeight / image.naturalHeight, 1);
+        const displayWidth = Math.max(1, Math.round(image.naturalWidth * ratio));
+        const displayHeight = Math.max(1, Math.round(image.naturalHeight * ratio));
+
+        editorCanvas.width = displayWidth;
+        editorCanvas.height = displayHeight;
+
+        editorState = {
+          image,
+          scale: displayWidth / image.naturalWidth,
+          crop: { x: 0, y: 0, w: displayWidth, h: displayHeight },
+          dragMode: null,
+          dragStart: null,
+          cropStart: null,
+          onApply,
+        };
+
+        resetEditorAdjustments();
+        setDialogStatus(editorStatus, '');
+        imageEditorDialog.showModal();
+      };
+      image.onerror = () => {
+        setDialogStatus(appDialogStatus, '画像の読み込みに失敗しました。', true);
+      };
+      image.src = imageSrc;
+    }
+
+    function resetEditorAdjustments() {
+      editBrightness.value = '0';
+      editContrast.value = '0';
+      editSaturation.value = '0';
+      if (editorState) {
+        editorState.crop = { x: 0, y: 0, w: editorCanvas.width, h: editorCanvas.height };
+      }
+      drawEditor();
+    }
+
+    function currentEditorFilter() {
+      const brightness = 1 + Number(editBrightness.value) / 100;
+      const contrast = 1 + Number(editContrast.value) / 100;
+      const saturation = 1 + Number(editSaturation.value) / 100;
+      return \`brightness(\${brightness}) contrast(\${contrast}) saturate(\${saturation})\`;
+    }
+
+    function drawEditor() {
+      if (!editorState) return;
+      const ctx = editorCanvas.getContext('2d');
+      const { image, crop } = editorState;
+      const w = editorCanvas.width;
+      const h = editorCanvas.height;
+
+      ctx.save();
+      ctx.filter = currentEditorFilter();
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(image, 0, 0, w, h);
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(15, 23, 32, 0.5)';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(crop.x, crop.y, crop.w, crop.h);
+      ctx.clip();
+      ctx.filter = currentEditorFilter();
+      ctx.drawImage(image, 0, 0, w, h);
+      ctx.restore();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(crop.x + 0.75, crop.y + 0.75, Math.max(0, crop.w - 1.5), Math.max(0, crop.h - 1.5));
+
+      const handleSize = 8;
+      const corners = [
+        [crop.x, crop.y],
+        [crop.x + crop.w, crop.y],
+        [crop.x, crop.y + crop.h],
+        [crop.x + crop.w, crop.y + crop.h],
+      ];
+      ctx.fillStyle = '#146c94';
+      corners.forEach(([px, py]) => {
+        ctx.fillRect(px - handleSize / 2, py - handleSize / 2, handleSize, handleSize);
+      });
+    }
+
+    function getCanvasPos(event) {
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY,
+      };
+    }
+
+    function hitTestHandle(pos, crop) {
+      const tolerance = 10;
+      const corners = {
+        nw: { x: crop.x, y: crop.y },
+        ne: { x: crop.x + crop.w, y: crop.y },
+        sw: { x: crop.x, y: crop.y + crop.h },
+        se: { x: crop.x + crop.w, y: crop.y + crop.h },
+      };
+      for (const [name, point] of Object.entries(corners)) {
+        if (Math.abs(pos.x - point.x) <= tolerance && Math.abs(pos.y - point.y) <= tolerance) {
+          return name;
+        }
+      }
+      return null;
+    }
+
+    function pointInCrop(pos, crop) {
+      return pos.x >= crop.x && pos.x <= crop.x + crop.w && pos.y >= crop.y && pos.y <= crop.y + crop.h;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function resizeCrop(handle, dx, dy, cropStart, canvasWidth, canvasHeight) {
+      const minSize = 20;
+      let { x, y, w, h } = cropStart;
+
+      if (handle.includes('n')) {
+        const newY = clamp(y + dy, 0, y + h - minSize);
+        h = y + h - newY;
+        y = newY;
+      }
+      if (handle.includes('s')) {
+        h = clamp(h + dy, minSize, canvasHeight - y);
+      }
+      if (handle.includes('w')) {
+        const newX = clamp(x + dx, 0, x + w - minSize);
+        w = x + w - newX;
+        x = newX;
+      }
+      if (handle.includes('e')) {
+        w = clamp(w + dx, minSize, canvasWidth - x);
+      }
+
+      return { x, y, w, h };
+    }
+
+    editorCanvas.addEventListener('mousedown', (event) => {
+      if (!editorState) return;
+      const pos = getCanvasPos(event);
+      const handle = hitTestHandle(pos, editorState.crop);
+
+      if (handle) {
+        editorState.dragMode = 'resize:' + handle;
+      } else if (pointInCrop(pos, editorState.crop)) {
+        editorState.dragMode = 'move';
+      } else {
+        return;
+      }
+
+      editorState.dragStart = pos;
+      editorState.cropStart = { ...editorState.crop };
+    });
+
+    document.addEventListener('mousemove', (event) => {
+      if (!editorState || !editorState.dragMode) return;
+      const pos = getCanvasPos(event);
+      const dx = pos.x - editorState.dragStart.x;
+      const dy = pos.y - editorState.dragStart.y;
+      const w = editorCanvas.width;
+      const h = editorCanvas.height;
+
+      if (editorState.dragMode === 'move') {
+        const { x: startX, y: startY, w: cw, h: ch } = editorState.cropStart;
+        editorState.crop = {
+          x: clamp(startX + dx, 0, w - cw),
+          y: clamp(startY + dy, 0, h - ch),
+          w: cw,
+          h: ch,
+        };
+      } else {
+        const handle = editorState.dragMode.split(':')[1];
+        editorState.crop = resizeCrop(handle, dx, dy, editorState.cropStart, w, h);
+      }
+
+      drawEditor();
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (editorState) editorState.dragMode = null;
+    });
+
+    function applyImageEditor() {
+      if (!editorState) return;
+      const { image, crop, scale, onApply } = editorState;
+      const natural = {
+        x: crop.x / scale,
+        y: crop.y / scale,
+        w: crop.w / scale,
+        h: crop.h / scale,
+      };
+
+      const outputCanvas = document.createElement('canvas');
+      outputCanvas.width = Math.max(1, Math.round(natural.w));
+      outputCanvas.height = Math.max(1, Math.round(natural.h));
+      const ctx = outputCanvas.getContext('2d');
+      ctx.filter = currentEditorFilter();
+      ctx.drawImage(image, natural.x, natural.y, natural.w, natural.h, 0, 0, outputCanvas.width, outputCanvas.height);
+
+      const dataUrl = outputCanvas.toDataURL('image/png');
+      imageEditorDialog.close();
+      onApply(dataUrl);
     }
 
     async function openGithubDialog() {
