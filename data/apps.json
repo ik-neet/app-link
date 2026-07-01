@@ -70,5 +70,14 @@
     "url": "https://randmaker.ik-neet.com/",
     "initial": "R",
     "focus": "auto"
+  },
+  {
+    "slug": "mimikopi-lab",
+    "category": "desktop",
+    "title": "耳コピラボ",
+    "description": "曲をボーカル・ギター・ベースなど6パートに分離し、再生速度やピッチ、EQ、メトロノームを使って耳コピを助けるデスクトップアプリ。",
+    "url": "https://mimikopi-lab.ik-neet.com/",
+    "initial": "M",
+    "focus": "auto"
   }
 ]
