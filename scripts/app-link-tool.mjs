@@ -630,7 +630,7 @@ ${categoryHeadingRules}
     .thumb-zoom-preview {
       position: fixed;
       z-index: 50;
-      width: 520px;
+      width: 420px;
       max-width: calc(100vw - 24px);
       aspect-ratio: 16 / 9;
       padding: 4px;
@@ -717,8 +717,8 @@ ${sections}
 
     var preview = document.getElementById('thumbZoomPreview');
     var previewImg = preview.querySelector('img');
-    var previewWidth = 520;
-    var previewHeight = 520 * 9 / 16;
+    var maxPreviewWidth = 420;
+    var minPreviewWidth = 160;
     var margin = 12;
 
     document.querySelectorAll('.app-thumb').forEach(function (thumb) {
@@ -742,18 +742,29 @@ ${sections}
 
     function positionPreview(thumb) {
       var rect = thumb.getBoundingClientRect();
+      var spaceLeft = rect.left - margin * 2;
+      var spaceRight = window.innerWidth - rect.right - margin * 2;
 
-      var left = rect.left - previewWidth - margin;
-      if (left < margin) {
+      var width;
+      var left;
+
+      if (spaceLeft >= minPreviewWidth) {
+        width = Math.min(maxPreviewWidth, spaceLeft);
+        left = rect.left - width - margin;
+      } else if (spaceRight >= minPreviewWidth) {
+        width = Math.min(maxPreviewWidth, spaceRight);
         left = rect.right + margin;
-      }
-      if (left + previewWidth > window.innerWidth - margin) {
-        left = Math.max(margin, (window.innerWidth - previewWidth) / 2);
+      } else {
+        width = Math.min(maxPreviewWidth, window.innerWidth - margin * 2);
+        left = Math.max(margin, (window.innerWidth - width) / 2);
       }
 
-      var top = rect.top + rect.height / 2 - previewHeight / 2;
-      top = Math.min(Math.max(top, margin), window.innerHeight - previewHeight - margin);
+      var height = width * 9 / 16;
+      var top = rect.top + rect.height / 2 - height / 2;
+      top = Math.min(Math.max(top, margin), window.innerHeight - height - margin);
 
+      preview.style.width = width + 'px';
+      preview.style.height = height + 'px';
       preview.style.left = left + 'px';
       preview.style.top = top + 'px';
     }
