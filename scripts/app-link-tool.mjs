@@ -630,7 +630,7 @@ ${categoryHeadingRules}
     .thumb-zoom-preview {
       position: fixed;
       z-index: 50;
-      width: 360px;
+      width: 520px;
       max-width: calc(100vw - 24px);
       aspect-ratio: 16 / 9;
       padding: 4px;
@@ -717,8 +717,8 @@ ${sections}
 
     var preview = document.getElementById('thumbZoomPreview');
     var previewImg = preview.querySelector('img');
-    var previewWidth = 360;
-    var previewHeight = 360 * 9 / 16;
+    var previewWidth = 520;
+    var previewHeight = 520 * 9 / 16;
     var margin = 12;
 
     document.querySelectorAll('.app-thumb').forEach(function (thumb) {
@@ -743,11 +743,11 @@ ${sections}
     function positionPreview(thumb) {
       var rect = thumb.getBoundingClientRect();
 
-      var left = rect.right + margin;
-      if (left + previewWidth > window.innerWidth - margin) {
-        left = rect.left - previewWidth - margin;
-      }
+      var left = rect.left - previewWidth - margin;
       if (left < margin) {
+        left = rect.right + margin;
+      }
+      if (left + previewWidth > window.innerWidth - margin) {
         left = Math.max(margin, (window.innerWidth - previewWidth) / 2);
       }
 
