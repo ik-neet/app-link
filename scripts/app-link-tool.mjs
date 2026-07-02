@@ -627,6 +627,40 @@ ${categoryHeadingRules}
       white-space: nowrap;
     }
 
+    .thumb-zoom-preview {
+      position: fixed;
+      z-index: 50;
+      width: 360px;
+      max-width: calc(100vw - 24px);
+      aspect-ratio: 16 / 9;
+      padding: 4px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(15, 30, 45, 0.28);
+      opacity: 0;
+      transform: scale(0.96);
+      pointer-events: none;
+      transition: opacity 0.12s ease, transform 0.12s ease;
+    }
+
+    .thumb-zoom-preview.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .thumb-zoom-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 4px;
+    }
+
+    @media (hover: none) {
+      .thumb-zoom-preview { display: none; }
+    }
+
     footer {
       padding: 28px 0 44px;
       color: var(--muted);
@@ -674,6 +708,57 @@ ${sections}
 <footer>
   © 2026 ik_neet
 </footer>
+
+<div class="thumb-zoom-preview" id="thumbZoomPreview" aria-hidden="true"><img alt="" /></div>
+
+<script>
+  (function () {
+    if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+
+    var preview = document.getElementById('thumbZoomPreview');
+    var previewImg = preview.querySelector('img');
+    var previewWidth = 360;
+    var previewHeight = 360 * 9 / 16;
+    var margin = 12;
+
+    document.querySelectorAll('.app-thumb').forEach(function (thumb) {
+      var img = thumb.querySelector('img');
+      if (!img) return;
+
+      thumb.addEventListener('mouseenter', function () {
+        previewImg.src = img.currentSrc || img.src;
+        positionPreview(thumb);
+        preview.classList.add('visible');
+      });
+
+      thumb.addEventListener('mouseleave', function () {
+        preview.classList.remove('visible');
+      });
+    });
+
+    window.addEventListener('scroll', function () {
+      preview.classList.remove('visible');
+    }, { passive: true });
+
+    function positionPreview(thumb) {
+      var rect = thumb.getBoundingClientRect();
+
+      var left = rect.right + margin;
+      if (left + previewWidth > window.innerWidth - margin) {
+        left = rect.left - previewWidth - margin;
+      }
+      if (left < margin) {
+        left = Math.max(margin, (window.innerWidth - previewWidth) / 2);
+      }
+
+      var top = rect.top + rect.height / 2 - previewHeight / 2;
+      top = Math.min(Math.max(top, margin), window.innerHeight - previewHeight - margin);
+
+      preview.style.left = left + 'px';
+      preview.style.top = top + 'px';
+    }
+  })();
+</script>
 
 </body>
 </html>
