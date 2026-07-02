@@ -37,6 +37,16 @@
     "url": "https://quiz-battle-9a6fa.web.app/",
     "initial": "Q",
     "focus": "center",
+    "hidden": true
+  },
+  {
+    "slug": "img-monotonize",
+    "category": "tool",
+    "title": "画像モノトーン変換",
+    "description": "画像をグレースケール・モノトーンに変換できるツール。明るさやコントラストの調整も可能で、処理はすべてブラウザ内で完結します。",
+    "url": "https://img-monotonize.ik-neet.com/",
+    "initial": "モ",
+    "focus": "auto",
     "hidden": false
   },
   {
@@ -77,16 +87,6 @@
     "url": "https://roulette.ik-neet.com/",
     "initial": "R",
     "focus": "center",
-    "hidden": false
-  },
-  {
-    "slug": "img-monotonize",
-    "category": "tool",
-    "title": "画像モノトーン変換",
-    "description": "画像をグレースケール・モノトーンに変換できるツール。明るさやコントラストの調整も可能で、処理はすべてブラウザ内で完結します。",
-    "url": "https://img-monotonize.ik-neet.com/",
-    "initial": "モ",
-    "focus": "auto",
     "hidden": false
   },
   {
