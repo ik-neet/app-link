@@ -40,6 +40,16 @@
     "hidden": true
   },
   {
+    "slug": "itomodoki",
+    "category": "game",
+    "title": "itomodoki",
+    "description": "数字を言わずに感覚で伝えあう協力カードゲーム。ルームを作って合言葉を共有すれば、その場のみんなで遊べます。",
+    "url": "https://itomodoki.ik-neet.com/",
+    "initial": "い",
+    "focus": "auto",
+    "hidden": false
+  },
+  {
     "slug": "img-monotonize",
     "category": "tool",
     "title": "画像モノトーン変換",
