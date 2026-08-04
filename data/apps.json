@@ -50,6 +50,16 @@
     "hidden": false
   },
   {
+    "slug": "table",
+    "category": "game",
+    "title": "オンラインテーブルゲーム",
+    "description": "6桁のコードを共有するだけで集まって遊べるオンラインボードゲーム。クモノイト・ワードウルフ・大富豪・ひらがな麻雀を収録。",
+    "url": "https://table.ik-neet.com/",
+    "initial": "T",
+    "focus": "auto",
+    "hidden": false
+  },
+  {
     "slug": "img-monotonize",
     "category": "tool",
     "title": "画像モノトーン変換",
