@@ -6,9 +6,17 @@ import { chromium } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
-const dataPath = path.join(projectRoot, 'data', 'apps.json');
-const categoriesPath = path.join(projectRoot, 'data', 'categories.json');
-const indexPath = path.join(projectRoot, 'index.html');
+
+// E2E は APP_LINK_DATA_ROOT に使い捨てのデータ置き場を指すことで、
+// リポジトリの data/apps.json と index.html を汚さずに読み書きする。
+// サムネイルと assets は実体を共有する（読み取りのみ）。
+const dataRoot = process.env.APP_LINK_DATA_ROOT
+  ? path.resolve(process.env.APP_LINK_DATA_ROOT)
+  : projectRoot;
+
+const dataPath = path.join(dataRoot, 'data', 'apps.json');
+const categoriesPath = path.join(dataRoot, 'data', 'categories.json');
+const indexPath = path.join(dataRoot, 'index.html');
 const outputDir = path.join(projectRoot, 'assets', 'thumbs');
 
 const defaultCategories = [

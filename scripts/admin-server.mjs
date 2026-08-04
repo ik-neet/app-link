@@ -20,7 +20,14 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
 const thumbsDir = path.join(projectRoot, 'assets', 'thumbs');
-const indexPath = path.join(projectRoot, 'index.html');
+
+// APP_LINK_DATA_ROOT は E2E 用の使い捨てデータ置き場（app-link-tool.mjs と同じ規約）。
+// /preview が読む index.html もそちらへ向ける。/assets は実体を共有する。
+const dataRoot = process.env.APP_LINK_DATA_ROOT
+  ? path.resolve(process.env.APP_LINK_DATA_ROOT)
+  : projectRoot;
+
+const indexPath = path.join(dataRoot, 'index.html');
 const port = Number(process.env.PORT || 8790);
 const execFileAsync = promisify(execFile);
 const slugPattern = /^[a-z0-9-]+$/;
@@ -1281,9 +1288,9 @@ function renderAdminPage() {
       event.preventDefault();
       const payload = Object.fromEntries(new FormData(categoryForm).entries());
       await request('/api/categories', { method: 'POST', body: payload }, { statusEl: categoryDialogStatus });
-      setStatus('カテゴリを追加しました。');
       categoryDialog.close();
-      await loadApps();
+      await loadApps({ announce: false });
+      setStatus('カテゴリを追加しました。');
       refreshPreview();
     });
 
@@ -1303,19 +1310,22 @@ function renderAdminPage() {
         pendingThumbnailDataUrl = null;
       }
 
-      setStatus(editingSlug ? '更新しました。' : '追加しました。');
+      const message = editingSlug ? '更新しました。' : '追加しました。';
       appDialog.close();
-      await loadApps();
+      await loadApps({ announce: false });
+      setStatus(message);
       refreshPreview();
     });
 
-    async function loadApps() {
+    /* 操作の完了メッセージを潰さないよう、再読み込み自体の告知は任意にする
+       （announce: false で呼び、呼び出し側が自分の完了メッセージを出す） */
+    async function loadApps(options = {}) {
       const data = await request('/api/apps');
       apps = data.apps;
       categories = data.categories;
       renderCategoryOptions();
       renderLists();
-      setStatus('読み込みました。');
+      if (options.announce !== false) setStatus('読み込みました。');
     }
 
     function renderCategoryOptions() {
@@ -1368,8 +1378,8 @@ function renderAdminPage() {
           const slug = button.dataset.remove;
           if (!confirm(slug + ' を削除しますか？')) return;
           await request('/api/apps/' + encodeURIComponent(slug), { method: 'DELETE' });
+          await loadApps({ announce: false });
           setStatus('削除しました。');
-          await loadApps();
           refreshPreview();
         });
       });
@@ -1396,15 +1406,16 @@ function renderAdminPage() {
       const app = apps.find((item) => item.slug === slug);
       if (!app) return;
       await request('/api/apps/' + encodeURIComponent(slug), { method: 'PUT', body: { hidden: !app.hidden } });
-      setStatus(app.hidden ? '表示にしました。' : '非表示にしました。');
-      await loadApps();
+      const message = app.hidden ? '表示にしました。' : '非表示にしました。';
+      await loadApps({ announce: false });
+      setStatus(message);
       refreshPreview();
     }
 
     async function moveApp(slug, direction) {
       await request('/api/apps/order', { method: 'PUT', body: { slug, direction } });
+      await loadApps({ announce: false });
       setStatus('並び順を変更しました。');
-      await loadApps();
       refreshPreview();
     }
 
@@ -1503,7 +1514,7 @@ function renderAdminPage() {
       appForm.elements.slug.disabled = true;
       appDialogTitle.textContent = '編集：' + payload.title;
       thumbNewHint.hidden = true;
-      await loadApps();
+      await loadApps({ announce: false });
 
       return editingSlug;
     }
@@ -1573,7 +1584,7 @@ function renderAdminPage() {
         await request('/api/refresh', { method: 'POST', body }, { statusEl: appDialogStatus });
         pendingThumbnailDataUrl = null;
         thumbRevertButton.hidden = true;
-        await loadApps();
+        await loadApps({ announce: false });
         const app = apps.find((item) => item.slug === slug);
         if (app) updateThumbPreview(app);
         refreshPreview();
@@ -1862,8 +1873,8 @@ function renderAdminPage() {
 
     async function runAction(endpoint, body, message) {
       await request(endpoint, { method: 'POST', body });
+      await loadApps({ announce: false });
       setStatus(message);
-      await loadApps();
       refreshPreview();
     }
 
