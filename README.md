@@ -2,6 +2,11 @@
 
 `ik-neet.com` のトップサイトとして公開する静的リンク集です。
 
+デザイン規約は [DESIGN.md](DESIGN.md)、色・寸法・イージングの実体は
+[assets/tokens.css](assets/tokens.css) にあります。UI を触る前に読んでください。
+`index.html` は `scripts/app-link-tool.mjs` の生成物なので直接編集せず、
+テンプレートを直して `npm run apps:build` で作り直します。
+
 ## Cloudflare Pages で公開
 
 1. Cloudflare Dashboard で **Workers & Pages** を開く。

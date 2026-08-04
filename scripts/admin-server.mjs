@@ -398,6 +398,7 @@ function contentType(filePath) {
   const extension = path.extname(filePath).toLowerCase();
   if (extension === '.png') return 'image/png';
   if (extension === '.svg') return 'image/svg+xml; charset=utf-8';
+  if (extension === '.css') return 'text/css; charset=utf-8';
   if (extension === '.ico') return 'image/x-icon';
   if (extension === '.json') return 'application/json; charset=utf-8';
   return 'application/octet-stream';
@@ -410,143 +411,251 @@ function renderAdminPage() {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>App Link Admin</title>
+  <link rel="icon" href="/assets/icon/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/tokens.css" />
   <style>
-    * { box-sizing: border-box; }
+    /* Hallmark · genre: editorial · macrostructure: Workbench (app surface)
+     * nav: N6 masthead toolbar · design-system: DESIGN.md · designed-as-app
+     * 色・寸法・イージングは /assets/tokens.css の token のみを参照する。
+     */
 
-    :root {
-      --bg: #f6f8fb;
-      --panel: #ffffff;
-      --text: #1f2d3d;
-      --muted: #607083;
-      --line: #d8e1ea;
-      --accent: #146c94;
-      --danger: #b7372f;
-      --soft: #edf5f9;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+    html, body { overflow-x: clip; }
 
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
-      line-height: 1.55;
+      background: var(--color-paper);
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      line-height: var(--leading-tight);
+      letter-spacing: var(--track-body);
+      -webkit-font-smoothing: antialiased;
     }
 
-    header {
+    body[data-busy="true"] { cursor: progress; }
+
+    .shell {
+      width: min(var(--page-width), calc(100% - var(--space-lg)));
+      margin-inline: auto;
+    }
+
+    :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* --- masthead: 半透明レイヤーの下をコンテンツが流れる --- */
+
+    .masthead {
       position: sticky;
       top: 0;
-      z-index: 2;
-      border-bottom: 1px solid var(--line);
-      background: rgba(246, 248, 251, 0.96);
-      backdrop-filter: blur(8px);
+      z-index: 20;
+      background: var(--material-chrome);
+      backdrop-filter: blur(var(--material-blur)) saturate(180%);
+      -webkit-backdrop-filter: blur(var(--material-blur)) saturate(180%);
+      box-shadow: inset 0 -1px transparent;
+      transition: box-shadow var(--dur-short) var(--ease-out);
     }
 
-    .bar,
-    main {
-      width: min(960px, calc(100% - 32px));
-      margin: 0 auto;
+    .masthead[data-scrolled="true"] { box-shadow: inset 0 -1px var(--color-rule); }
+
+    .masthead::after {
+      content: "";
+      position: absolute;
+      inset: 100% 0 auto 0;
+      height: var(--space-sm);
+      background: linear-gradient(to bottom, var(--color-paper), transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-short) var(--ease-out);
     }
+
+    .masthead[data-scrolled="true"]::after { opacity: 1; }
 
     .bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 14px 0;
+      gap: var(--space-sm);
       flex-wrap: wrap;
+      padding-block: var(--space-2xs);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2xs);
+      min-width: 0;
+    }
+
+    .brand img {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: block;
     }
 
     h1 {
       margin: 0;
-      font-size: 20px;
-      line-height: 1.3;
+      font-size: var(--text-lg);
+      font-weight: 700;
+      line-height: var(--leading-heading);
+      letter-spacing: var(--track-heading);
     }
 
     .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: var(--space-3xs);
       justify-content: flex-end;
     }
 
-    button,
-    select,
-    input,
-    textarea {
-      font: inherit;
-    }
+    /* --- controls --- */
+
+    button, select, input, textarea { font: inherit; }
 
     button {
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 7px 10px;
-      background: #fff;
-      color: var(--text);
-      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3xs);
+      min-height: 2.25rem;
+      padding-inline: var(--space-xs);
+      border: var(--rule-hair) solid var(--color-rule-strong);
+      border-radius: var(--radius-sm);
+      background: var(--color-paper-2);
+      color: var(--color-ink);
+      font-size: var(--text-xs);
       font-weight: 650;
+      letter-spacing: var(--track-small);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background-color var(--dur-instant) var(--ease-out), border-color var(--dur-instant) var(--ease-out), transform var(--dur-instant) var(--ease-out);
     }
 
-    button:hover { border-color: #9fb3c5; }
-    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    button.danger { color: var(--danger); }
-    button:disabled { cursor: wait; opacity: 0.58; }
+    button:hover { background: var(--color-paper-3); }
 
-    main {
-      padding: 22px 0 36px;
+    /* フィードバックは pointer-down の瞬間に出す */
+    button:active { transform: translateY(1px); }
+
+    button.primary {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-accent-ink);
     }
 
-    section {
-      min-width: 0;
+    button.primary:hover { background: color-mix(in oklab, var(--color-accent) 88%, var(--color-ink)); }
+
+    button.danger { color: var(--color-danger); }
+    button.danger:hover { background: var(--color-danger-wash); border-color: var(--color-danger); }
+
+    button.quiet {
+      border-color: transparent;
+      background: transparent;
+      color: var(--color-ink-2);
     }
+
+    button.quiet:hover { background: var(--color-paper-3); color: var(--color-ink); }
+
+    button.icon {
+      min-width: 2.25rem;
+      padding-inline: var(--space-2xs);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 2.25rem;
+      padding: var(--space-3xs) var(--space-2xs);
+      border: var(--rule-hair) solid var(--color-rule-strong);
+      border-radius: var(--radius-sm);
+      background: var(--color-paper-2);
+      color: var(--color-ink);
+      font-size: var(--text-sm);
+      transition: border-color var(--dur-instant) var(--ease-out);
+    }
+
+    input:hover, select:hover, textarea:hover { border-color: var(--color-ink-2); }
+
+    textarea {
+      min-height: 4.5rem;
+      line-height: var(--leading-body);
+      resize: vertical;
+    }
+
+    input[type="color"] { padding: 2px; }
+
+    label {
+      display: grid;
+      gap: var(--space-3xs);
+      margin-bottom: var(--space-2xs);
+      color: var(--color-ink-2);
+      font-size: var(--text-2xs);
+      font-weight: 650;
+      letter-spacing: var(--track-small);
+    }
+
+    /* --- layout --- */
+
+    main { padding-block: var(--space-md) var(--space-xl); }
 
     .section-title {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 12px;
-      margin: 0 0 8px;
-      border-bottom: 1px solid var(--line);
+      gap: var(--space-2xs);
+      margin: 0 0 var(--space-2xs);
+      padding-bottom: var(--space-3xs);
+      border-bottom: var(--rule-hair) solid var(--color-rule);
     }
 
     h2 {
       margin: 0;
-      padding-bottom: 6px;
-      font-size: 18px;
+      font-size: var(--text-md);
+      font-weight: 700;
+      letter-spacing: var(--track-heading);
     }
 
     .count {
-      color: var(--muted);
-      font-size: 13px;
+      color: var(--color-ink-2);
+      font-size: var(--text-2xs);
+      letter-spacing: var(--track-small);
     }
 
-    .app-list {
-      display: grid;
-      gap: 0;
-      margin-bottom: 26px;
-      border-top: 1px solid var(--line);
-    }
+    .app-list { margin-bottom: var(--space-lg); }
 
     .app-row {
       display: grid;
-      grid-template-columns: 120px 1fr auto;
+      grid-template-columns: 7.5rem minmax(0, 1fr) auto;
       align-items: center;
-      gap: 14px;
-      padding: 12px 4px;
-      border-bottom: 1px solid var(--line);
+      gap: var(--space-sm);
+      padding: var(--space-2xs) var(--space-3xs);
+      border-bottom: var(--rule-hair) solid var(--color-rule);
+      transition: background-color var(--dur-instant) var(--ease-out);
     }
 
+    .app-row:hover { background: var(--color-paper-3); }
+
     .thumb {
-      width: 120px;
+      width: 7.5rem;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
       overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: #fff;
-      color: var(--accent);
-      font-size: 24px;
-      font-weight: 800;
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-paper-2);
+      color: var(--color-accent);
+      font-size: var(--text-xl);
+      font-weight: 700;
     }
 
     .thumb img {
@@ -556,167 +665,189 @@ function renderAdminPage() {
       display: block;
     }
 
-    .meta {
-      min-width: 0;
-    }
-
-    .meta strong,
-    .meta span {
-      display: block;
-    }
+    .meta { min-width: 0; }
 
     .meta strong {
-      font-size: 16px;
-      line-height: 1.35;
+      display: block;
+      font-size: var(--text-md);
+      font-weight: 700;
+      line-height: var(--leading-tight);
+      letter-spacing: var(--track-heading);
+      overflow-wrap: anywhere;
     }
 
-    .meta span,
-    .url {
-      color: var(--muted);
-      font-size: 13px;
+    .meta .desc {
+      display: block;
+      margin-top: 0.125rem;
+      color: var(--color-ink-2);
+      font-size: var(--text-xs);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
     }
 
     .url {
+      margin-top: 0.125rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--color-ink-2);
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
     }
 
     .row-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: var(--space-3xs);
       justify-content: flex-end;
     }
 
     .status {
-      min-height: 24px;
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 13px;
+      min-height: 1.5rem;
+      margin: var(--space-2xs) 0 0;
+      color: var(--color-ink-2);
+      font-size: var(--text-xs);
     }
 
     .status.error {
-      color: var(--danger);
+      color: var(--color-danger);
       font-weight: 700;
     }
 
     .git-status {
-      min-height: 72px;
-      max-height: 180px;
+      min-height: 4.5rem;
+      max-height: 11rem;
       overflow: auto;
-      margin: 8px 0 10px;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 8px;
-      background: #f8fafc;
-      color: var(--muted);
-      font-family: Consolas, "Courier New", monospace;
-      font-size: 12px;
+      margin: var(--space-2xs) 0;
+      padding: var(--space-2xs);
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-paper-3);
+      color: var(--color-ink-2);
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
+      line-height: 1.5;
       white-space: pre-wrap;
-    }
-
-    iframe {
-      width: 100%;
-      height: 420px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fff;
     }
 
     .preview-heading {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      margin: 8px 0 10px;
+      gap: var(--space-2xs);
+      margin-bottom: var(--space-2xs);
     }
 
-    label {
-      display: grid;
-      gap: 5px;
-      margin-bottom: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 650;
-    }
-
-    input,
-    select,
-    textarea {
+    iframe {
       width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 8px 9px;
-      background: #fff;
-      color: var(--text);
+      height: 26rem;
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-md);
+      background: var(--color-paper-2);
+      box-shadow: var(--shadow-lift);
     }
 
-    textarea {
-      min-height: 74px;
-      resize: vertical;
+    /* --- more menu: トリガー起点で開く --- */
+
+    .menu-wrap { position: relative; }
+
+    .menu {
+      position: absolute;
+      top: calc(100% + var(--space-3xs));
+      right: 0;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3xs);
+      min-width: 11rem;
+      padding: var(--space-3xs);
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-md);
+      background: var(--material-float);
+      backdrop-filter: blur(var(--material-blur));
+      -webkit-backdrop-filter: blur(var(--material-blur));
+      box-shadow: var(--shadow-float);
+      transform-origin: top right;
+      animation: material-in var(--dur-short) var(--ease-out);
     }
 
-    .form-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 14px;
-    }
+    .menu[hidden] { display: none; }
 
-    /* --- Modal (dialog) --- */
+    .menu button { justify-content: flex-start; }
+
+    /* --- dialogs --- */
+
     dialog {
-      width: min(520px, calc(100vw - 32px));
-      max-height: calc(100vh - 64px);
+      width: min(33rem, calc(100vw - var(--space-lg)));
+      max-height: calc(100vh - var(--space-xl));
       overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
       padding: 0;
-      box-shadow: 0 18px 48px rgba(20, 45, 70, 0.22);
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-lg);
+      background: var(--color-paper-2);
+      color: var(--color-ink);
+      box-shadow: var(--shadow-float);
     }
+
+    dialog[open] { animation: material-in var(--dur-medium) var(--ease-out); }
 
     dialog::backdrop {
-      background: rgba(15, 28, 43, 0.45);
+      background: var(--scrim);
+      backdrop-filter: blur(2px);
     }
 
-    .modal-inner {
-      padding: 18px 20px 20px;
+    @keyframes material-in {
+      from { opacity: 0; transform: scale(0.96); filter: blur(4px); }
+      to { opacity: 1; transform: scale(1); filter: blur(0); }
     }
 
-    .modal-title {
-      margin: 0 0 14px;
-      font-size: 18px;
-    }
+    .modal-inner { padding: var(--space-2xs) var(--space-md) var(--space-md); }
 
     .modal-close-row {
       display: flex;
       justify-content: flex-end;
     }
 
-    dialog.git-dialog {
-      width: min(560px, calc(100vw - 32px));
+    .modal-title {
+      margin: 0 0 var(--space-sm);
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: var(--track-heading);
+      overflow-wrap: anywhere;
     }
+
+    dialog.git-dialog { width: min(35rem, calc(100vw - var(--space-lg))); }
+    dialog.image-editor-dialog { width: min(40rem, calc(100vw - var(--space-lg))); }
+
+    .form-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2xs);
+      margin-top: var(--space-sm);
+    }
+
+    /* --- thumbnail tools --- */
 
     .thumb-preview-row {
       display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 14px;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
     }
 
     .thumb-preview {
-      width: 160px;
+      width: 10rem;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
       overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: #fff;
-      color: var(--accent);
-      font-size: 28px;
-      font-weight: 800;
       flex: none;
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-paper-3);
+      color: var(--color-accent);
+      font-size: var(--text-2xl);
+      font-weight: 700;
     }
 
     .thumb-preview img {
@@ -729,85 +860,54 @@ function renderAdminPage() {
     .thumb-tools {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-2xs);
       flex: 1;
       min-width: 0;
     }
 
     .thumb-tools input[type="file"] {
-      padding: 6px;
+      padding: var(--space-3xs);
       border-style: dashed;
     }
 
     .thumb-tools .hint {
       margin: 0;
-      color: var(--muted);
-      font-size: 12px;
+      color: var(--color-ink-2);
+      font-size: var(--text-2xs);
+      line-height: 1.5;
     }
 
     .thumb-tools .thumb-tool-row {
       display: flex;
-      gap: 6px;
-    }
-
-    .menu-wrap {
-      position: relative;
-    }
-
-    .menu {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 170px;
-      padding: 6px;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      box-shadow: 0 10px 28px rgba(20, 45, 70, 0.18);
-      z-index: 5;
-    }
-
-    .menu[hidden] {
-      display: none;
-    }
-
-    .menu button {
-      justify-content: flex-start;
-      text-align: left;
+      flex-wrap: wrap;
+      gap: var(--space-3xs);
     }
 
     .app-row.is-hidden .thumb,
-    .app-row.is-hidden .meta {
-      opacity: 0.5;
-    }
+    .app-row.is-hidden .meta { opacity: 0.5; }
 
     .badge-hidden {
       display: inline-block;
-      margin-left: 6px;
-      padding: 1px 7px;
-      border-radius: 3px;
-      background: #f5e6d3;
-      color: #8a5a1f;
-      font-size: 11px;
-      font-weight: 700;
+      margin-left: var(--space-3xs);
+      padding: 0 var(--space-2xs);
+      border-radius: var(--radius-pill);
+      background: color-mix(in oklab, var(--color-ink) 10%, transparent);
+      color: var(--color-ink-2);
+      font-size: var(--text-2xs);
+      font-weight: 650;
       vertical-align: middle;
     }
 
-    dialog.image-editor-dialog {
-      width: min(640px, calc(100vw - 32px));
-    }
+    /* --- image editor --- */
 
     .editor-canvas-wrap {
       display: flex;
       justify-content: center;
-      margin-bottom: 12px;
-      background: repeating-conic-gradient(#e7edf2 0% 25%, #f6f8fb 0% 50%) 0 0 / 20px 20px;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 8px;
+      margin-bottom: var(--space-2xs);
+      padding: var(--space-2xs);
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: repeating-conic-gradient(var(--color-paper-3) 0% 25%, var(--color-paper-2) 0% 50%) 0 0 / 20px 20px;
     }
 
     #editorCanvas {
@@ -818,89 +918,105 @@ function renderAdminPage() {
 
     .editor-controls {
       display: grid;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: var(--space-2xs);
+      margin-bottom: var(--space-2xs);
     }
 
     .editor-controls label {
       display: grid;
-      grid-template-columns: 80px 1fr;
+      grid-template-columns: 5rem minmax(0, 1fr);
       align-items: center;
-      gap: 8px;
+      gap: var(--space-2xs);
       margin-bottom: 0;
     }
 
     .editor-controls input[type="range"] {
       width: 100%;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      accent-color: var(--color-accent);
     }
 
-    @media (max-width: 640px) {
+    /* --- narrow --- */
+
+    @media (max-width: 40rem) {
+      .shell { width: calc(100% - var(--space-md)); }
+
       .bar {
-        align-items: flex-start;
         flex-direction: column;
+        align-items: stretch;
       }
 
-      .actions {
-        justify-content: flex-start;
-      }
+      .actions { justify-content: flex-start; }
 
-      .app-row {
-        grid-template-columns: 88px 1fr;
-      }
+      .app-row { grid-template-columns: 5.5rem minmax(0, 1fr); }
 
-      .thumb {
-        width: 88px;
-      }
+      .thumb { width: 5.5rem; }
 
       .row-actions {
-        grid-column: 2;
+        grid-column: 1 / -1;
         justify-content: flex-start;
       }
 
-      .thumb-preview-row {
-        flex-direction: column;
-        align-items: flex-start;
+      .thumb-preview-row { flex-direction: column; }
+
+      .form-actions { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      button:active { transform: none; }
+
+      dialog[open], .menu { animation: fade-in 150ms linear; }
+
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="bar">
-      <h1>App Link Admin</h1>
+  <header class="masthead" id="masthead">
+    <div class="bar shell">
+      <div class="brand">
+        <img src="/assets/icon/icon.svg" alt="" width="24" height="24" />
+        <h1>App Link Admin</h1>
+      </div>
       <div class="actions">
-        <button id="reloadButton">再読み込み</button>
+        <button id="reloadButton" class="quiet">再読み込み</button>
         <button id="addCategoryButton">カテゴリ追加</button>
         <button id="addButton">新規追加</button>
         <button id="githubButton" class="primary">GitHub反映</button>
         <div class="menu-wrap">
-          <button id="moreMenuButton" aria-haspopup="true" aria-expanded="false">・・・</button>
+          <button id="moreMenuButton" class="icon" aria-haspopup="true" aria-expanded="false" aria-label="その他の操作">…</button>
           <div id="moreMenu" class="menu" hidden>
-            <button id="thumbsButton">全サムネイル生成</button>
-            <button id="refreshButton">全更新</button>
+            <button id="thumbsButton" class="quiet">全サムネイル生成</button>
+            <button id="refreshButton" class="quiet">全更新</button>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <main>
-    <p id="globalStatus" class="status"></p>
+  <main class="shell">
+    <p id="globalStatus" class="status" role="status" aria-live="polite"></p>
     <section>
       <div id="lists"></div>
 
       <div class="preview-heading">
         <h2>プレビュー</h2>
-        <button id="previewButton">更新</button>
+        <button id="previewButton" class="quiet">更新</button>
       </div>
-      <iframe id="preview" src="/preview"></iframe>
+      <iframe id="preview" src="/preview" title="トップページのプレビュー"></iframe>
     </section>
   </main>
 
   <dialog id="appDialog">
     <div class="modal-inner">
       <div class="modal-close-row">
-        <button type="button" id="appDialogCloseTop" aria-label="閉じる">×</button>
+        <button type="button" id="appDialogCloseTop" class="quiet icon" aria-label="閉じる">×</button>
       </div>
       <h2 class="modal-title" id="appDialogTitle">新規追加</h2>
 
@@ -919,7 +1035,7 @@ function renderAdminPage() {
             <div class="thumb-tool-row">
               <button type="button" id="captureButton">撮影</button>
               <button type="button" id="thumbEditButton">画像を編集</button>
-              <button type="button" id="thumbRevertButton" hidden>元に戻す</button>
+              <button type="button" id="thumbRevertButton" class="quiet" hidden>元に戻す</button>
             </div>
           </div>
         </div>
@@ -952,14 +1068,14 @@ function renderAdminPage() {
           <button type="submit" class="primary">保存</button>
         </div>
       </form>
-      <p id="appDialogStatus" class="status"></p>
+      <p id="appDialogStatus" class="status" role="status" aria-live="polite"></p>
     </div>
   </dialog>
 
   <dialog id="categoryDialog">
     <div class="modal-inner">
       <div class="modal-close-row">
-        <button type="button" id="categoryDialogCloseTop" aria-label="閉じる">×</button>
+        <button type="button" id="categoryDialogCloseTop" class="quiet icon" aria-label="閉じる">×</button>
       </div>
       <h2 class="modal-title">カテゴリ追加</h2>
 
@@ -978,14 +1094,14 @@ function renderAdminPage() {
           <button type="submit" class="primary">追加</button>
         </div>
       </form>
-      <p id="categoryDialogStatus" class="status"></p>
+      <p id="categoryDialogStatus" class="status" role="status" aria-live="polite"></p>
     </div>
   </dialog>
 
   <dialog id="githubDialog" class="git-dialog">
     <div class="modal-inner">
       <div class="modal-close-row">
-        <button type="button" id="githubDialogCloseTop" aria-label="閉じる">×</button>
+        <button type="button" id="githubDialogCloseTop" class="quiet icon" aria-label="閉じる">×</button>
       </div>
       <h2 class="modal-title">GitHub反映</h2>
 
@@ -997,14 +1113,14 @@ function renderAdminPage() {
         <button type="button" id="commitPushButton" class="primary">コミットしてpush</button>
       </div>
       <pre id="gitStatus" class="git-status">未確認</pre>
-      <p id="githubDialogStatus" class="status"></p>
+      <p id="githubDialogStatus" class="status" role="status" aria-live="polite"></p>
     </div>
   </dialog>
 
   <dialog id="imageEditorDialog" class="image-editor-dialog">
     <div class="modal-inner">
       <div class="modal-close-row">
-        <button type="button" id="editorCloseTop" aria-label="閉じる">×</button>
+        <button type="button" id="editorCloseTop" class="quiet icon" aria-label="閉じる">×</button>
       </div>
       <h2 class="modal-title">サムネイル編集</h2>
 
@@ -1025,13 +1141,14 @@ function renderAdminPage() {
       <div class="form-actions">
         <button type="button" id="editorApplyButton" class="primary" style="grid-column: 1 / -1;">この内容を反映</button>
       </div>
-      <p id="editorStatus" class="status"></p>
+      <p id="editorStatus" class="status" role="status" aria-live="polite"></p>
     </div>
   </dialog>
 
   <script>
     const lists = document.querySelector('#lists');
     const preview = document.querySelector('#preview');
+    const masthead = document.querySelector('#masthead');
 
     const appDialog = document.querySelector('#appDialog');
     const appDialogTitle = document.querySelector('#appDialogTitle');
@@ -1070,6 +1187,10 @@ function renderAdminPage() {
     let editorState = null;
     let pendingThumbnailDataUrl = null;
 
+    window.addEventListener('scroll', () => {
+      masthead.setAttribute('data-scrolled', window.scrollY > 4 ? 'true' : 'false');
+    }, { passive: true });
+
     document.querySelector('#reloadButton').addEventListener('click', loadApps);
     document.querySelector('#thumbsButton').addEventListener('click', () => {
       closeMoreMenu();
@@ -1088,6 +1209,9 @@ function renderAdminPage() {
       moreMenuButton.setAttribute('aria-expanded', String(isHidden));
     });
     document.addEventListener('click', closeMoreMenu);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !moreMenu.hidden) closeMoreMenu();
+    });
 
     function closeMoreMenu() {
       moreMenu.hidden = true;
@@ -1220,6 +1344,13 @@ function renderAdminPage() {
         \`;
       }).join('');
 
+      lists.querySelectorAll('.thumb img').forEach((img) => {
+        img.addEventListener('error', () => {
+          const holder = img.parentElement;
+          if (holder) holder.textContent = img.dataset.fallback || '-';
+        });
+      });
+
       lists.querySelectorAll('[data-edit]').forEach((button) => {
         button.addEventListener('click', () => openEditDialog(button.dataset.edit));
       });
@@ -1282,18 +1413,18 @@ function renderAdminPage() {
       const hiddenBadge = app.hidden ? '<span class="badge-hidden">非表示</span>' : '';
       return \`
         <div class="app-row \${app.hidden ? 'is-hidden' : ''}">
-          <div class="thumb"><img src="\${thumbSrc}" alt="" onerror="this.replaceWith(document.createTextNode('\${escapeHtml(app.initial)}'))"></div>
+          <div class="thumb"><img src="\${thumbSrc}" alt="" data-fallback="\${escapeHtml(app.initial)}"></div>
           <div class="meta">
             <strong>\${escapeHtml(app.title)}\${hiddenBadge}</strong>
-            <span>\${escapeHtml(app.description)}</span>
+            <span class="desc">\${escapeHtml(app.description)}</span>
             <div class="url">\${escapeHtml(app.url)}</div>
           </div>
           <div class="row-actions">
-            <button data-move-up="\${escapeHtml(app.slug)}" \${isFirst ? 'disabled' : ''} aria-label="上へ">▲</button>
-            <button data-move-down="\${escapeHtml(app.slug)}" \${isLast ? 'disabled' : ''} aria-label="下へ">▼</button>
+            <button class="icon quiet" data-move-up="\${escapeHtml(app.slug)}" \${isFirst ? 'disabled' : ''} aria-label="上へ移動">▲</button>
+            <button class="icon quiet" data-move-down="\${escapeHtml(app.slug)}" \${isLast ? 'disabled' : ''} aria-label="下へ移動">▼</button>
             <button data-edit="\${escapeHtml(app.slug)}">編集</button>
             <button data-thumbnail="\${escapeHtml(app.slug)}">撮影</button>
-            <button data-visibility="\${escapeHtml(app.slug)}">\${app.hidden ? '表示する' : '非表示にする'}</button>
+            <button class="quiet" data-visibility="\${escapeHtml(app.slug)}">\${app.hidden ? '表示する' : '非表示にする'}</button>
             <button class="danger" data-remove="\${escapeHtml(app.slug)}">削除</button>
           </div>
         </div>
@@ -1501,6 +1632,11 @@ function renderAdminPage() {
       return \`brightness(\${brightness}) contrast(\${contrast}) saturate(\${saturation})\`;
     }
 
+    function readCssColor(name, fallback) {
+      const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return value || fallback;
+    }
+
     function drawEditor() {
       if (!editorState) return;
       const ctx = editorCanvas.getContext('2d');
@@ -1529,14 +1665,14 @@ function renderAdminPage() {
       ctx.lineWidth = 1.5;
       ctx.strokeRect(crop.x + 0.75, crop.y + 0.75, Math.max(0, crop.w - 1.5), Math.max(0, crop.h - 1.5));
 
-      const handleSize = 8;
+      const handleSize = 10;
       const corners = [
         [crop.x, crop.y],
         [crop.x + crop.w, crop.y],
         [crop.x, crop.y + crop.h],
         [crop.x + crop.w, crop.y + crop.h],
       ];
-      ctx.fillStyle = '#146c94';
+      ctx.fillStyle = readCssColor('--color-accent', '#146c94');
       corners.forEach(([px, py]) => {
         ctx.fillRect(px - handleSize / 2, py - handleSize / 2, handleSize, handleSize);
       });
@@ -1553,7 +1689,7 @@ function renderAdminPage() {
     }
 
     function hitTestHandle(pos, crop) {
-      const tolerance = 10;
+      const tolerance = 12;
       const corners = {
         nw: { x: crop.x, y: crop.y },
         ne: { x: crop.x + crop.w, y: crop.y },
@@ -1600,7 +1736,9 @@ function renderAdminPage() {
       return { x, y, w, h };
     }
 
-    editorCanvas.addEventListener('mousedown', (event) => {
+    /* ドラッグは Pointer Events + setPointerCapture で 1:1 に追従させる
+       （キャンバス外へ出ても掴んだままになる／タッチでも動く） */
+    editorCanvas.addEventListener('pointerdown', (event) => {
       if (!editorState) return;
       const pos = getCanvasPos(event);
       const handle = hitTestHandle(pos, editorState.crop);
@@ -1613,12 +1751,16 @@ function renderAdminPage() {
         return;
       }
 
+      editorCanvas.setPointerCapture(event.pointerId);
+      editorState.pointerId = event.pointerId;
       editorState.dragStart = pos;
       editorState.cropStart = { ...editorState.crop };
     });
 
-    document.addEventListener('mousemove', (event) => {
+    editorCanvas.addEventListener('pointermove', (event) => {
       if (!editorState || !editorState.dragMode) return;
+      if (editorState.pointerId !== undefined && event.pointerId !== editorState.pointerId) return;
+
       const pos = getCanvasPos(event);
       const dx = pos.x - editorState.dragStart.x;
       const dy = pos.y - editorState.dragStart.y;
@@ -1641,9 +1783,17 @@ function renderAdminPage() {
       drawEditor();
     });
 
-    document.addEventListener('mouseup', () => {
-      if (editorState) editorState.dragMode = null;
-    });
+    function endEditorDrag(event) {
+      if (!editorState) return;
+      if (editorState.pointerId !== undefined && editorCanvas.hasPointerCapture(editorState.pointerId)) {
+        editorCanvas.releasePointerCapture(editorState.pointerId);
+      }
+      editorState.dragMode = null;
+      editorState.pointerId = undefined;
+    }
+
+    editorCanvas.addEventListener('pointerup', endEditorDrag);
+    editorCanvas.addEventListener('pointercancel', endEditorDrag);
 
     function applyImageEditor() {
       if (!editorState) return;
@@ -1745,13 +1895,18 @@ function renderAdminPage() {
       preview.src = '/preview?ts=' + Date.now();
     }
 
+    /* 処理中に止めるのはボタンだけ。入力欄は触れたままにして操作を奪わない */
     function setBusy(isBusy) {
-      document.querySelectorAll('button, input, textarea, select').forEach((element) => {
-        if (element === appForm.elements.slug && editingSlug) {
+      document.body.dataset.busy = String(isBusy);
+      document.body.setAttribute('aria-busy', String(isBusy));
+      document.querySelectorAll('button').forEach((element) => {
+        if (isBusy) {
+          element.dataset.wasDisabled = String(element.disabled);
           element.disabled = true;
           return;
         }
-        element.disabled = isBusy;
+        element.disabled = element.dataset.wasDisabled === 'true';
+        delete element.dataset.wasDisabled;
       });
     }
 

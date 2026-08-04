@@ -421,12 +421,13 @@ function renderIndex(apps, cats) {
     .map((category) => `      --cat-${escapeHtml(category.className)}: ${escapeHtml(category.color || '#146c94')};`)
     .join('\n');
 
-  const categoryHeadingRules = cats
-    .map((category) => `    .section-heading.${escapeHtml(category.className)} h2 { border-bottom: 2px solid var(--cat-${escapeHtml(category.className)}); }`)
+  const categoryColorVarsDark = cats
+    .map((category) => `        --cat-${escapeHtml(category.className)}: color-mix(in oklab, ${escapeHtml(category.color || '#146c94')} 42%, white);`)
     .join('\n');
 
-  const categoryTabRules = cats
-    .map((category) => `    .category-tab.${escapeHtml(category.className)} { border-bottom-color: var(--cat-${escapeHtml(category.className)}); }`)
+  const categoryAccentRules = cats
+    .map((category) => `    .section-heading.${escapeHtml(category.className)},
+    .category-tab.${escapeHtml(category.className)} { --cat: var(--cat-${escapeHtml(category.className)}); }`)
     .join('\n');
 
   const categoryNav = renderCategoryNav(cats);
@@ -437,6 +438,9 @@ function renderIndex(apps, cats) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ik-neet.com | アプリ一覧</title>
+  <meta name="description" content="ik-neet.com で公開している Web アプリ・ツール・デスクトップアプリの一覧です。" />
+  <meta name="theme-color" content="#f7fafc" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)" />
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z1G7WQ77E1"></script>
@@ -450,112 +454,229 @@ function renderIndex(apps, cats) {
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="assets/tokens.css" />
 
   <style>
-    * { box-sizing: border-box; }
+    /* Hallmark · genre: editorial · macrostructure: Catalogue (index list)
+     * nav: N9 edge-aligned tab rail · footer: Ft1 hairline colophon
+     * design-system: DESIGN.md · designed-as-app
+     */
 
     :root {
-      --bg: #f7fafc;
-      --text: #1f2d3d;
-      --muted: #627386;
-      --line: #d9e4ec;
-      --accent: #146c94;
-      --surface-hover: #eef6fa;
 ${categoryColorVars}
     }
 
+    @media (prefers-color-scheme: dark) {
+      :root {
+${categoryColorVarsDark}
+      }
+    }
+
+    /* カテゴリ色は --cat 一本に集約し、見出し／タブ側は var(--cat) だけを参照する */
+${categoryAccentRules}
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
+    html, body { overflow-x: clip; }
+
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      line-height: 1.65;
+      background: var(--color-paper);
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      font-size: var(--text-md);
+      line-height: var(--leading-body);
+      letter-spacing: var(--track-body);
+      font-optical-sizing: auto;
+      -webkit-font-smoothing: antialiased;
     }
 
-    header,
-    nav,
-    main,
-    footer {
-      width: min(960px, calc(100% - 40px));
-      margin: 0 auto;
+    .shell {
+      width: min(var(--page-width), calc(100% - var(--space-lg)));
+      margin-inline: auto;
     }
 
-    header {
-      padding: 48px 0 22px;
-      border-bottom: 1px solid var(--line);
+    :where(a, button, [tabindex]):focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
     }
 
-    h1 { margin: 0; }
+    .skip-link {
+      position: absolute;
+      left: var(--space-sm);
+      top: var(--space-sm);
+      z-index: 80;
+      padding: var(--space-2xs) var(--space-sm);
+      border-radius: var(--radius-pill);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-decoration: none;
+      transform: translateY(-200%);
+    }
+
+    .skip-link:focus-visible { transform: translateY(0); }
+
+    /* --- header --- */
+
+    .site-header {
+      padding-block: var(--space-xl) var(--space-md);
+    }
+
+    .site-title { margin: 0; }
 
     .site-logo {
       display: block;
-      width: min(300px, 82vw);
+      width: min(18.75rem, 82vw);
       height: auto;
     }
 
     .lead {
-      max-width: 560px;
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 15px;
+      max-width: var(--measure);
+      margin: var(--space-2xs) 0 0;
+      color: var(--color-ink-2);
+      font-size: var(--text-md);
     }
 
-    main { padding: 22px 0 8px; }
+    /* --- category rail (translucent chrome, content scrolls under) --- */
 
-    .app-section { padding: 26px 0 12px; }
+    .category-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--material-chrome);
+      backdrop-filter: blur(var(--material-blur)) saturate(180%);
+      -webkit-backdrop-filter: blur(var(--material-blur)) saturate(180%);
+      box-shadow: inset 0 -1px transparent;
+      transition: box-shadow var(--dur-short) var(--ease-out);
+    }
+
+    .category-nav[data-scrolled="true"] {
+      box-shadow: inset 0 -1px var(--color-rule);
+    }
+
+    /* スクロールエッジ: 罫線ではなくフェードでコンテンツと分ける */
+    .category-nav::after {
+      content: "";
+      position: absolute;
+      inset: 100% 0 auto 0;
+      height: var(--space-sm);
+      background: linear-gradient(to bottom, var(--color-paper), transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-short) var(--ease-out);
+    }
+
+    .category-nav[data-scrolled="true"]::after { opacity: 1; }
+
+    .category-nav-track {
+      display: flex;
+      gap: var(--space-sm);
+      padding-block: var(--space-3xs);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .category-nav-track::-webkit-scrollbar { display: none; }
+
+    .category-tab {
+      --cat: var(--color-accent);
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.5rem;
+      padding-inline: var(--space-2xs);
+      border-radius: var(--radius-sm);
+      color: var(--color-ink-2);
+      font-size: var(--text-sm);
+      font-weight: 650;
+      letter-spacing: var(--track-small);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color var(--dur-instant) var(--ease-out), background-color var(--dur-instant) var(--ease-out), transform var(--dur-instant) var(--ease-out);
+    }
+
+    .category-tab::after {
+      content: "";
+      position: absolute;
+      left: var(--space-2xs);
+      right: var(--space-2xs);
+      bottom: 0.3rem;
+      height: 2px;
+      border-radius: var(--radius-pill);
+      background: var(--cat);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform var(--dur-short) var(--ease-out);
+    }
+
+    .category-tab:hover {
+      color: var(--color-ink);
+      background: var(--color-paper-3);
+    }
+
+    .category-tab:active { transform: translateY(1px); }
+
+    .category-tab:hover::after,
+    .category-tab[aria-current="true"]::after { transform: scaleX(1); }
+
+    .category-tab[aria-current="true"] { color: var(--color-ink); }
+
+    /* --- sections --- */
+
+    main { padding-bottom: var(--space-sm); }
+
+    .app-section { padding-block: var(--space-lg) var(--space-2xs); }
 
     .section-heading {
+      --cat: var(--color-accent);
       display: flex;
       align-items: baseline;
-      gap: 10px;
-      margin-bottom: 10px;
-      border-bottom: 2px solid var(--line);
+      gap: var(--space-2xs);
+      padding-bottom: var(--space-2xs);
+      border-bottom: var(--rule-hair) solid var(--color-rule);
     }
 
     .section-heading h2 {
+      position: relative;
       margin: 0;
-      padding-bottom: 8px;
-      font-size: 22px;
-      line-height: 1.3;
-      letter-spacing: 0;
-      scroll-margin-top: 64px;
+      font-size: var(--text-xl);
+      font-weight: 700;
+      line-height: var(--leading-heading);
+      letter-spacing: var(--track-heading);
+      overflow-wrap: anywhere;
+      min-width: 0;
+      scroll-margin-top: calc(var(--chrome-height) + var(--space-sm));
+    }
+
+    .section-heading h2::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * var(--space-2xs) - 1px);
+      height: 2px;
+      border-radius: var(--radius-pill);
+      background: var(--cat);
     }
 
     .section-heading .count {
-      color: var(--muted);
-      font-size: 13px;
+      flex: none;
+      padding: 0.05rem var(--space-2xs);
+      border-radius: var(--radius-pill);
+      background: color-mix(in oklab, var(--cat) 16%, transparent);
+      color: var(--color-ink-2);
+      font-size: var(--text-2xs);
+      font-weight: 650;
+      letter-spacing: var(--track-small);
     }
-
-    .category-nav {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 22px;
-      padding: 14px 0;
-      position: sticky;
-      top: 0;
-      z-index: 3;
-      background: rgba(247, 250, 252, 0.96);
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid var(--line);
-    }
-
-    .category-tab {
-      display: inline-block;
-      padding-bottom: 4px;
-      border-bottom: 2px solid transparent;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0;
-    }
-
-    .category-tab:hover { color: var(--accent); }
-
-${categoryTabRules}
-
-${categoryHeadingRules}
 
     .app-items {
       list-style: none;
@@ -563,38 +684,48 @@ ${categoryHeadingRules}
       padding: 0;
     }
 
-    .app-item { border-bottom: 1px solid var(--line); }
+    .app-item + .app-item { border-top: var(--rule-hair) solid var(--color-rule); }
+
+    .app-empty {
+      margin: 0;
+      padding: var(--space-sm) var(--space-2xs);
+      color: var(--color-ink-2);
+      font-size: var(--text-sm);
+    }
 
     .app-link {
       display: grid;
-      grid-template-columns: 120px 1fr auto;
+      grid-template-columns: 7.5rem minmax(0, 1fr) auto;
       align-items: center;
-      gap: 16px;
-      padding: 14px 4px;
+      gap: var(--space-sm);
+      margin-inline: calc(-1 * var(--space-2xs));
+      padding: var(--space-xs) var(--space-2xs);
+      border-radius: var(--radius-md);
       color: inherit;
       text-decoration: none;
+      transition: background-color var(--dur-instant) var(--ease-out), transform var(--dur-instant) var(--ease-out);
     }
 
-    .app-link:hover { background: var(--surface-hover); }
+    .app-link:hover { background: var(--color-paper-3); }
 
-    .app-link:focus-visible {
-      outline: 3px solid rgba(20, 108, 148, 0.22);
-      outline-offset: 2px;
+    .app-link:active {
+      background: var(--color-accent-wash);
+      transform: scale(0.995);
     }
 
     .app-thumb {
-      width: 120px;
+      width: 7.5rem;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
       overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: #fff;
-      color: var(--accent);
-      font-size: 24px;
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-paper-2);
+      color: var(--color-accent);
+      font-size: var(--text-xl);
       font-weight: 700;
-      letter-spacing: 0;
+      letter-spacing: var(--track-heading);
     }
 
     .app-thumb img {
@@ -608,45 +739,63 @@ ${categoryHeadingRules}
 
     .app-title {
       display: block;
-      margin-bottom: 2px;
-      font-size: 17px;
-      line-height: 1.4;
+      font-size: var(--text-lg);
+      font-weight: 700;
+      line-height: var(--leading-tight);
+      letter-spacing: var(--track-heading);
+      overflow-wrap: anywhere;
     }
 
     .app-description {
       display: block;
-      color: var(--muted);
-      font-size: 14px;
+      margin-top: 0.125rem;
+      color: var(--color-ink-2);
+      font-size: var(--text-sm);
       line-height: 1.55;
     }
 
     .app-action {
-      color: var(--accent);
-      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3xs);
+      color: var(--color-accent);
+      font-size: var(--text-xs);
       font-weight: 700;
+      letter-spacing: var(--track-small);
       white-space: nowrap;
     }
 
+    .app-action svg {
+      width: 0.7rem;
+      height: 0.7rem;
+      transition: transform var(--dur-short) var(--ease-out);
+    }
+
+    .app-link:hover .app-action svg { transform: translateX(3px); }
+
+    /* --- hover zoom preview (materializes from the thumbnail it belongs to) --- */
+
     .thumb-zoom-preview {
       position: fixed;
-      z-index: 50;
-      width: 420px;
-      max-width: calc(100vw - 24px);
-      aspect-ratio: 16 / 9;
-      padding: 4px;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: 0 18px 44px rgba(15, 30, 45, 0.28);
+      z-index: 60;
+      padding: var(--space-3xs);
+      background: var(--material-float);
+      backdrop-filter: blur(var(--material-blur));
+      -webkit-backdrop-filter: blur(var(--material-blur));
+      border: var(--rule-hair) solid var(--color-rule);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-float);
       opacity: 0;
-      transform: scale(0.96);
+      transform: scale(0.94);
+      filter: blur(6px);
       pointer-events: none;
-      transition: opacity 0.12s ease, transform 0.12s ease;
+      transition: opacity var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out), filter var(--dur-short) var(--ease-out);
     }
 
     .thumb-zoom-preview.visible {
       opacity: 1;
       transform: scale(1);
+      filter: blur(0);
     }
 
     .thumb-zoom-preview img {
@@ -654,58 +803,95 @@ ${categoryHeadingRules}
       height: 100%;
       object-fit: cover;
       display: block;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
     }
 
     @media (hover: none) {
       .thumb-zoom-preview { display: none; }
     }
 
-    footer {
-      padding: 28px 0 44px;
-      color: var(--muted);
-      font-size: 12px;
+    /* --- footer --- */
+
+    .site-footer {
+      margin-top: var(--space-lg);
+      padding-block: var(--space-md) var(--space-xl);
+      border-top: var(--rule-hair) solid var(--color-rule);
+      color: var(--color-ink-2);
+      font-size: var(--text-2xs);
+      letter-spacing: var(--track-small);
     }
 
-    @media (max-width: 640px) {
-      header,
-      main,
-      footer {
-        width: min(100% - 28px, 960px);
-      }
+    /* --- narrow --- */
 
-      header { padding-top: 34px; }
+    @media (max-width: 40rem) {
+      .shell { width: calc(100% - var(--space-md)); }
+
+      .site-header { padding-top: var(--space-lg); }
 
       .app-link {
-        grid-template-columns: 88px 1fr;
-        gap: 12px;
-        padding: 13px 0;
+        grid-template-columns: 5.5rem minmax(0, 1fr);
+        gap: var(--space-2xs) var(--space-xs);
+        padding-inline: var(--space-3xs);
       }
 
-      .app-thumb { width: 88px; }
+      .app-thumb { width: 5.5rem; }
 
       .app-action {
         grid-column: 2;
         justify-self: start;
-        margin-top: -6px;
+        margin-top: calc(-1 * var(--space-3xs));
       }
+    }
+
+    /* --- reduced motion: 位置の動きを外し、不透明度のみに落とす --- */
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+
+      .app-link:active,
+      .category-tab:active,
+      .app-link:hover .app-action svg { transform: none; }
+
+      .category-tab::after {
+        transform: scaleX(1);
+        opacity: 0;
+        transition: opacity 150ms linear;
+      }
+
+      .category-tab:hover::after,
+      .category-tab[aria-current="true"]::after { opacity: 1; }
+
+      .thumb-zoom-preview {
+        transform: none;
+        filter: none;
+        transition: opacity 150ms linear;
+      }
+
+      .thumb-zoom-preview.visible { transform: none; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1><img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" /></h1>
+<a class="skip-link" href="#main">本文へスキップ</a>
+
+<header class="site-header shell">
+  <h1 class="site-title">
+    <picture>
+      <source srcset="assets/logo-variants/logo-dark-white.svg" media="(prefers-color-scheme: dark)" />
+      <img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" width="421" height="120" />
+    </picture>
+  </h1>
   <p class="lead">制作したWebアプリの一覧です。</p>
 </header>
 
 ${categoryNav}
 
-<main>
+<main id="main" class="shell">
 ${sections}
 </main>
 
-<footer>
+<footer class="site-footer shell">
   © 2026 ik_neet
 </footer>
 
@@ -713,6 +899,49 @@ ${sections}
 
 <script>
   (function () {
+    var nav = document.getElementById('categoryNav');
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.category-tab'));
+    var headings = tabs.map(function (tab) {
+      return document.getElementById(tab.getAttribute('href').slice(1));
+    });
+    var ticking = false;
+
+    function syncScrollState() {
+      ticking = false;
+
+      if (nav) {
+        nav.setAttribute('data-scrolled', window.scrollY > 4 ? 'true' : 'false');
+      }
+
+      if (tabs.length === 0) return;
+
+      var offset = (nav ? nav.getBoundingClientRect().height : 48) + 12;
+      var activeIndex = 0;
+
+      for (var i = 0; i < headings.length; i += 1) {
+        if (headings[i] && headings[i].getBoundingClientRect().top <= offset) activeIndex = i;
+      }
+
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+        activeIndex = headings.length - 1;
+      }
+
+      tabs.forEach(function (tab, index) {
+        if (index === activeIndex) tab.setAttribute('aria-current', 'true');
+        else tab.removeAttribute('aria-current');
+      });
+    }
+
+    function requestSync() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(syncScrollState);
+    }
+
+    window.addEventListener('scroll', requestSync, { passive: true });
+    window.addEventListener('resize', requestSync, { passive: true });
+    syncScrollState();
+
     if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
 
     var preview = document.getElementById('thumbZoomPreview');
@@ -747,16 +976,20 @@ ${sections}
 
       var width;
       var left;
+      var origin;
 
       if (spaceLeft >= minPreviewWidth) {
         width = Math.min(maxPreviewWidth, spaceLeft);
         left = rect.left - width - margin;
+        origin = 'right center';
       } else if (spaceRight >= minPreviewWidth) {
         width = Math.min(maxPreviewWidth, spaceRight);
         left = rect.right + margin;
+        origin = 'left center';
       } else {
         width = Math.min(maxPreviewWidth, window.innerWidth - margin * 2);
         left = Math.max(margin, (window.innerWidth - width) / 2);
+        origin = 'center center';
       }
 
       var height = width * 9 / 16;
@@ -767,6 +1000,7 @@ ${sections}
       preview.style.height = height + 'px';
       preview.style.left = left + 'px';
       preview.style.top = top + 'px';
+      preview.style.transformOrigin = origin;
     }
   })();
 </script>
@@ -781,14 +1015,20 @@ function renderCategoryNav(cats) {
     .map((category) => `    <a class="category-tab ${escapeHtml(category.className)}" href="#${category.id}s-heading">${escapeHtml(category.label)}</a>`)
     .join('\n');
 
-  return `<nav class="category-nav" aria-label="カテゴリ">
+  return `<nav class="category-nav" id="categoryNav" aria-label="カテゴリ">
+  <div class="category-nav-track shell">
 ${tabs}
+  </div>
 </nav>`;
 }
 
 function renderSection(category, apps) {
   const headingId = `${category.id}s-heading`;
-  const items = apps.map(renderAppItem).join('\n\n');
+  const items = apps.length > 0
+    ? `    <ul class="app-items">
+${apps.map(renderAppItem).join('\n\n')}
+    </ul>`
+    : '    <p class="app-empty">このカテゴリのアプリはまだありません。</p>';
 
   return `  <section class="app-section" aria-labelledby="${headingId}">
     <div class="section-heading ${category.className}">
@@ -796,23 +1036,25 @@ function renderSection(category, apps) {
       <span class="count">${apps.length}件</span>
     </div>
 
-    <ul class="app-items">
 ${items}
-    </ul>
   </section>`;
 }
 
 function renderAppItem(app) {
   return `      <li class="app-item">
-        <a class="app-link" href="${escapeHtml(app.url)}" target="_blank">
+        <a class="app-link" href="${escapeHtml(app.url)}" target="_blank" rel="noopener noreferrer">
           <span class="app-thumb">${renderThumbnail(app)}</span>
           <span class="app-text">
             <strong class="app-title">${escapeHtml(app.title)}</strong>
             <span class="app-description">${escapeHtml(app.description)}</span>
           </span>
-          <span class="app-action">開く</span>
+          <span class="app-action">開く${arrowIcon()}</span>
         </a>
       </li>`;
+}
+
+function arrowIcon() {
+  return '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4l4 4-4 4" /></svg>';
 }
 
 function renderThumbnail(app) {
