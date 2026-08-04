@@ -421,10 +421,6 @@ function renderIndex(apps, cats) {
     .map((category) => `      --cat-${escapeHtml(category.className)}: ${escapeHtml(category.color || '#146c94')};`)
     .join('\n');
 
-  const categoryColorVarsDark = cats
-    .map((category) => `        --cat-${escapeHtml(category.className)}: color-mix(in oklab, ${escapeHtml(category.color || '#146c94')} 42%, white);`)
-    .join('\n');
-
   const categoryAccentRules = cats
     .map((category) => `    .section-heading.${escapeHtml(category.className)},
     .category-tab.${escapeHtml(category.className)} { --cat: var(--cat-${escapeHtml(category.className)}); }`)
@@ -439,8 +435,7 @@ function renderIndex(apps, cats) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ik-neet.com | アプリ一覧</title>
   <meta name="description" content="ik-neet.com で公開している Web アプリ・ツール・デスクトップアプリの一覧です。" />
-  <meta name="theme-color" content="#f7fafc" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f7fafc" />
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z1G7WQ77E1"></script>
@@ -464,12 +459,6 @@ function renderIndex(apps, cats) {
 
     :root {
 ${categoryColorVars}
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-${categoryColorVarsDark}
-      }
     }
 
     /* カテゴリ色は --cat 一本に集約し、見出し／タブ側は var(--cat) だけを参照する */
@@ -877,10 +866,7 @@ ${categoryAccentRules}
 
 <header class="site-header shell">
   <h1 class="site-title">
-    <picture>
-      <source srcset="assets/logo-variants/logo-dark-white.svg" media="(prefers-color-scheme: dark)" />
-      <img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" width="421" height="120" />
-    </picture>
+    <img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" width="421" height="120" />
   </h1>
   <p class="lead">制作したWebアプリの一覧です。</p>
 </header>

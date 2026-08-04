@@ -21,9 +21,14 @@
 
 ## Theme
 
-ブランドのシアン（ロゴの `#159BD3`）を軸にした OKLCH パレット。
-ライト／ダーク両対応。値は `assets/tokens.css` の `:root` と
-`@media (prefers-color-scheme: dark)` を参照。
+ブランドのシアン（ロゴの `#159BD3`）を軸にした OKLCH パレット。値は
+`assets/tokens.css` の `:root` を参照。
+
+**ライト一本。ダークテーマは採用しない。** アプリ一覧のサムネイルは各アプリの
+スクリーンショットで、そのほとんどが明るい画面のため、暗い地に置くと明るい長方形が
+並ぶだけになり一覧のまとまりが崩れる。`color-scheme: light` を宣言して
+フォームコントロールも OS 設定に引きずられないようにしている。
+（この判断はワークスペース規約の要求ではなく、このプロジェクト固有の選択）
 
 | 役割 | token |
 |---|---|
@@ -36,8 +41,7 @@
 | 材質 | `--material-chrome` / `--material-float` / `--material-blur` / `--scrim` |
 
 カテゴリ色（`data/categories.json` の `color`）は生成時に `--cat-<className>` として
-出力し、見出し／タブ側は `var(--cat)` だけを参照する。ダークテーマでは
-`color-mix(in oklab, <色> 42%, white)` で明度を持ち上げる。
+出力し、見出し／タブ側は `var(--cat)` だけを参照する。
 
 ## Typography
 

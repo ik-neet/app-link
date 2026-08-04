@@ -1,15 +1,18 @@
 /* Hallmark · genre: editorial · macrostructure: Catalogue (index list)
  * design-system: DESIGN.md · designed-as-app
  * theme: custom OKLCH anchored on the ik-neet brand cyan (#159BD3)
- * axes: paper-band light+dark · display-style system-sans · accent-hue cool
+ * axes: paper-band light · display-style system-sans · accent-hue cool
  *
  * ik-neet.com shared design tokens.
  * 公開トップ（index.html）と管理ツール（/admin）の唯一の色・寸法ソース。
  * ここ以外に生の色値や font-family を書かないこと。
+ *
+ * ライト一本。ダークテーマは採用しない（サムネイルが明るい画面のスクショ主体で、
+ * 暗い地では一覧のまとまりが崩れるため）。
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* --- surface & ink --- */
   --color-paper: oklch(98.5% 0.004 240);
@@ -89,32 +92,6 @@
   --dur-medium: 280ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-paper: oklch(19% 0.015 250);
-    --color-paper-2: oklch(23% 0.016 250);
-    --color-paper-3: oklch(26% 0.016 250);
-    --color-ink: oklch(93% 0.008 240);
-    --color-ink-2: oklch(71% 0.018 245);
-    --color-rule: oklch(32% 0.018 248);
-    --color-rule-strong: oklch(42% 0.02 248);
-
-    --color-accent: oklch(80% 0.1 228);
-    --color-accent-bright: oklch(74% 0.12 230);
-    --color-accent-ink: oklch(18% 0.02 250);
-    --color-accent-wash: oklch(30% 0.035 233);
-    --color-focus: oklch(74% 0.13 230);
-    --color-danger: oklch(72% 0.14 25);
-    --color-danger-wash: oklch(30% 0.04 25);
-
-    --material-chrome: oklch(19% 0.015 250 / 0.72);
-    --material-float: oklch(24% 0.016 250 / 0.9);
-    --scrim: oklch(12% 0.015 250 / 0.6);
-    --shadow-float: 0 1px 2px oklch(0% 0 0 / 0.4), 0 14px 36px oklch(0% 0 0 / 0.48);
-    --shadow-lift: 0 1px 2px oklch(0% 0 0 / 0.35), 0 4px 14px oklch(0% 0 0 / 0.3);
-  }
-}
-
 /* 半透明を減らす設定では材質を不透明に寄せる */
 @media (prefers-reduced-transparency: reduce) {
   :root {
@@ -133,13 +110,5 @@
     --material-chrome: var(--color-paper);
     --material-float: var(--color-paper-2);
     --material-blur: 0px;
-  }
-}
-
-@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
-  :root {
-    --color-ink-2: oklch(85% 0.01 245);
-    --color-rule: oklch(52% 0.02 248);
-    --color-rule-strong: oklch(66% 0.02 248);
   }
 }

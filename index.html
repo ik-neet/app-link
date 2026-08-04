@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ik-neet.com | アプリ一覧</title>
   <meta name="description" content="ik-neet.com で公開している Web アプリ・ツール・デスクトップアプリの一覧です。" />
-  <meta name="theme-color" content="#f7fafc" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f7fafc" />
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z1G7WQ77E1"></script>
@@ -32,14 +31,6 @@
       --cat-game: #1f8a70;
       --cat-tool: #8a5a1f;
       --cat-desktop: #146c94;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --cat-game: color-mix(in oklab, #1f8a70 42%, white);
-        --cat-tool: color-mix(in oklab, #8a5a1f 42%, white);
-        --cat-desktop: color-mix(in oklab, #146c94 42%, white);
-      }
     }
 
     /* カテゴリ色は --cat 一本に集約し、見出し／タブ側は var(--cat) だけを参照する */
@@ -452,10 +443,7 @@
 
 <header class="site-header shell">
   <h1 class="site-title">
-    <picture>
-      <source srcset="assets/logo-variants/logo-dark-white.svg" media="(prefers-color-scheme: dark)" />
-      <img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" width="421" height="120" />
-    </picture>
+    <img class="site-logo" src="assets/logo.svg" alt="ik-neet.com" width="421" height="120" />
   </h1>
   <p class="lead">制作したWebアプリの一覧です。</p>
 </header>
